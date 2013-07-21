@@ -41,7 +41,7 @@ from nmea_msgs.msg import Sentence
 if __name__ == '__main__':
     rospy.init_node('nmea_topic_serial_reader')
 
-    nmea_pub = rospy.Publisher("nmea_sentence", NMEASentence)
+    nmea_pub = rospy.Publisher("nmea_sentence", Sentence)
 
     serial_port = rospy.get_param('~port','/dev/ttyUSB0')
     serial_baud = rospy.get_param('~baud',4800)
