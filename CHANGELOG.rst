@@ -5,6 +5,8 @@ Change log for nmea_navsat_driver package
 0.3.2 (2013-07-21)
 -------------------
 * Moved to nmea_navsat_driver package
+* Removed .py extensions from new-in-Hydro scripts
+* Now uses nmea_msgs/Sentence instead of custom sentence type
 
 0.3.1 (2013-05-07)
 -------------------
@@ -17,7 +19,6 @@ Change log for nmea_navsat_driver package
 * nmea_gps_driver.py is now deprecated and will be removed in I-Turtle. Replacement node is nmea_serial_driver.py .
 * Refactored code into NMEA parser, common ROS driver and separate nodes for reading directly from serial or from topic.
 * Bugs fixed:
-
   - nmea_gps_driver crashes when a sentence doesn't have a checksum * character ( http://kforge.ros.org/gpsdrivers/trac/ticket/4 )
   - Add ability for nmea_gps_driver to support reading from string topic ( https://github.com/ros-drivers/nmea_gps_driver/issues/1 ). Use the nmea_topic_driver.py node to get this support.
 
