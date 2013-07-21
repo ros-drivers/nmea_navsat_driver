@@ -40,7 +40,7 @@ import libnmea_navsat_driver.driver
 
 def nmea_sentence_callback(nmea_sentence, driver):
     try:
-        driver.add_sentence(nmea_sentence.sentence, timestamp=nmea_sentence.header.stamp)
+        driver.add_sentence(nmea_sentence.sentence, frame_id=nmea_sentence.header.frame_id, timestamp=nmea_sentence.header.stamp)
     except ValueError as e:
         rospy.logwarn("Value error, likely due to missing fields in the NMEA message. Error was: %s" % e)
 

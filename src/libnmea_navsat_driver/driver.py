@@ -42,19 +42,17 @@ import libnmea_navsat_driver.parser
 
 class RosNMEADriver(object):
     def __init__(self):
-        self.frame_id = RosNMEADriver._get_frame_id()
-
         self.fix_pub = rospy.Publisher('fix', NavSatFix)
         self.vel_pub = rospy.Publisher('vel', TwistStamped)
         self.time_ref_pub = rospy.Publisher('time_reference', TimeReference)
 
         self.time_ref_source = rospy.get_param('~time_ref_source',
-                self.frame_id)
+                None)
         self.use_RMC = rospy.get_param('~useRMC', False)
 
     # Returns True if we successfully did something with the passed in
     # nmea_string
-    def add_sentence(self, nmea_string, timestamp=None):
+    def add_sentence(self, nmea_string, frame_id, timestamp=None):
         if not check_nmea_checksum(nmea_string):
             rospy.logwarn("Received a sentence with an invalid checksum. \
                 Sentence was: %s" % nmea_string)
@@ -72,11 +70,14 @@ class RosNMEADriver(object):
             current_time = rospy.get_rostime()
         current_fix = NavSatFix()
         current_fix.header.stamp = current_time
-        current_fix.header.frame_id = self.frame_id
+        current_fix.header.frame_id = frame_id
         current_time_ref = TimeReference()
         current_time_ref.header.stamp = current_time
-        current_time_ref.header.frame_id = self.frame_id
-        current_time_ref.source = self.time_ref_source
+        current_time_ref.header.frame_id = frame_id
+        if self.time_ref_source:
+            current_time_ref.source = self.time_ref_source
+        else:
+            current_time_ref.source = frame_id
 
         if not self.use_RMC and 'GGA' in parsed_sentence:
             data = parsed_sentence['GGA']
@@ -154,7 +155,7 @@ class RosNMEADriver(object):
             if data['fix_valid']:
                 current_vel = TwistStamped()
                 current_vel.header.stamp = current_time
-                current_vel.header.frame_id = self.frame_id
+                current_vel.header.frame_id = frame_id
                 current_vel.twist.linear.x = data['speed'] * \
                     math.sin(data['true_course'])
                 current_vel.twist.linear.y = data['speed'] * \
@@ -165,7 +166,7 @@ class RosNMEADriver(object):
 
     """Helper method for getting the frame_id with the correct TF prefix"""
     @staticmethod
-    def _get_frame_id():
+    def get_frame_id():
         frame_id = rospy.get_param('~frame_id', 'gps')
         if frame_id[0] != "/":
             """Add the TF prefix"""

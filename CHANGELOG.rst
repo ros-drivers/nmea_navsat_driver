@@ -7,6 +7,7 @@ Change log for nmea_navsat_driver package
 * Moved to nmea_navsat_driver package
 * Removed .py extensions from new-in-Hydro scripts
 * Now uses nmea_msgs/Sentence instead of custom sentence type
+* nmea_topic_driver reads the `frame_id` parameter from the sentence, not from the parameter server
 
 0.3.1 (2013-05-07)
 -------------------

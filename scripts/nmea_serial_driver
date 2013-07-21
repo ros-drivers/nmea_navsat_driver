@@ -43,6 +43,7 @@ if __name__ == '__main__':
 
     serial_port = rospy.get_param('~port','/dev/ttyUSB0')
     serial_baud = rospy.get_param('~baud',4800)
+    frame_id = libnmea_navsat_driver.driver.RosNMEADriver.get_frame_id()
 
     try:
         GPS = serial.Serial(port=serial_port, baudrate=serial_baud, timeout=2)
@@ -50,7 +51,7 @@ if __name__ == '__main__':
         while not rospy.is_shutdown():
             data = GPS.readline().strip()
             try:
-                driver.add_sentence(data)
+                driver.add_sentence(data, frame_id)
             except ValueError as e:
                 rospy.logwarn("Value error, likely due to missing fields in the NMEA message. Error was: %s" % e)
 
