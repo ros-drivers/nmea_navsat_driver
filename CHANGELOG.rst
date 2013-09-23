@@ -2,6 +2,10 @@
 Change log for nmea_navsat_driver package
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.3.3 (XXXX-XX-XX)
+-------------------
+* Allow the driver to output velocity information anytime an RMC message is received
+
 0.3.2 (2013-07-21)
 -------------------
 * Moved to nmea_navsat_driver package
