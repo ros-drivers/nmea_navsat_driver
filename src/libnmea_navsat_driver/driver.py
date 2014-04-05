@@ -114,14 +114,15 @@ class RosNMEADriver(object):
             current_fix.position_covariance_type = \
                 NavSatFix.COVARIANCE_TYPE_APPROXIMATED
 
-            #Altitude is above ellipsoid, so adjust for mean-sea-level
+            # Altitude is above ellipsoid, so adjust for mean-sea-level
             altitude = data['altitude'] + data['mean_sea_level']
             current_fix.altitude = altitude
 
-            current_time_ref.time_ref = rospy.Time.from_sec(data['utc_time'])
-
             self.fix_pub.publish(current_fix)
-            self.time_ref_pub.publish(current_time_ref)
+
+            if not math.isnan(data['utc_time']):
+                current_time_ref.time_ref = rospy.Time.from_sec(data['utc_time'])
+                self.time_ref_pub.publish(current_time_ref)
 
         elif 'RMC' in parsed_sentence:
             data = parsed_sentence['RMC']
@@ -149,10 +150,11 @@ class RosNMEADriver(object):
                 current_fix.position_covariance_type = \
                     NavSatFix.COVARIANCE_TYPE_UNKNOWN
 
-                current_time_ref.time_ref = rospy.Time.from_sec(data['utc_time'])
-
                 self.fix_pub.publish(current_fix)
-                self.time_ref_pub.publish(current_time_ref)
+
+                if not math.isnan(data['utc_time']):
+                    current_time_ref.time_ref = rospy.Time.from_sec(data['utc_time'])
+                    self.time_ref_pub.publish(current_time_ref)
 
             # Publish velocity from RMC regardless, since GGA doesn't provide it.
             if data['fix_valid']:

@@ -35,24 +35,34 @@ import time
 import calendar
 import math
 
+def convert_float_with_nan_for_empty(field):
+    try:
+        return float(field)
+    except ValueError as e:
+        return float('NaN')
+
 def convert_latitude(field):
-    return float(field[0:2])+float(field[2:])/60.0
+    return convert_float_with_nan_for_empty(field[0:2])+convert_float_with_nan_for_empty(field[2:])/60.0
 
 def convert_longitude(field):
-    return float(field[0:3])+float(field[3:])/60.0
+    return convert_float_with_nan_for_empty(field[0:3])+convert_float_with_nan_for_empty(field[3:])/60.0
 
 def convert_time(nmea_utc):
-    #Get current time in UTC for date information
+    # Get current time in UTC for date information
     utc_struct = time.gmtime() #immutable, so cannot modify this one
     utc_list = list(utc_struct)
-    hours = int(nmea_utc[0:2])
-    minutes = int(nmea_utc[2:4])
-    seconds = int(nmea_utc[4:6])
-    utc_list[3] = hours
-    utc_list[4] = minutes
-    utc_list[5] = seconds
-    unix_time = calendar.timegm(tuple(utc_list))
-    return unix_time
+    # If one of the time fields is empty, return NaN seconds
+    if not nmea_utc[0:2] or not nmea_utc[2:4] or not nmea_utc[4:6]:
+        return float('NaN')
+    else:
+        hours = int(nmea_utc[0:2])
+        minutes = int(nmea_utc[2:4])
+        seconds = int(nmea_utc[4:6])
+        utc_list[3] = hours
+        utc_list[4] = minutes
+        utc_list[5] = seconds
+        unix_time = calendar.timegm(tuple(utc_list))
+        return unix_time
 
 def convert_status_flag(status_flag):
     if status_flag == "A":
@@ -63,11 +73,11 @@ def convert_status_flag(status_flag):
         return False
 
 def convert_knots_to_mps(knots):
-    return float(knots)*0.514444444444
+    return convert_float_with_nan_for_empty(knots)*0.514444444444
 
 # Need this wrapper because math.radians doesn't auto convert inputs
 def convert_deg_to_rads(degs):
-    return math.radians(float(degs))
+    return math.radians(convert_float_with_nan_for_empty(degs))
 
 """Format for this is a sentence identifier (e.g. "GGA") as the key, with a
 tuple of tuples where each tuple is a field name, conversion function and index
@@ -79,9 +89,9 @@ parse_maps = {
             ("latitude_direction", str, 3),
             ("longitude", convert_longitude, 4),
             ("longitude_direction", str, 5),
-            ("altitude", float, 9),
-            ("mean_sea_level", float, 11),
-            ("hdop", float, 8),
+            ("altitude", convert_float_with_nan_for_empty, 9),
+            ("mean_sea_level", convert_float_with_nan_for_empty, 11),
+            ("hdop", convert_float_with_nan_for_empty, 8),
             ("num_satellites", int, 7),
             ("utc_time", convert_time, 1),
             ],
