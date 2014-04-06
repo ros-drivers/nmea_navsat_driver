@@ -35,17 +35,17 @@ import time
 import calendar
 import math
 
-def convert_float_with_nan_for_empty(field):
+def safe_float(field):
     try:
         return float(field)
     except ValueError as e:
         return float('NaN')
 
 def convert_latitude(field):
-    return convert_float_with_nan_for_empty(field[0:2])+convert_float_with_nan_for_empty(field[2:])/60.0
+    return safe_float(field[0:2])+safe_float(field[2:])/60.0
 
 def convert_longitude(field):
-    return convert_float_with_nan_for_empty(field[0:3])+convert_float_with_nan_for_empty(field[3:])/60.0
+    return safe_float(field[0:3])+safe_float(field[3:])/60.0
 
 def convert_time(nmea_utc):
     # Get current time in UTC for date information
@@ -73,11 +73,11 @@ def convert_status_flag(status_flag):
         return False
 
 def convert_knots_to_mps(knots):
-    return convert_float_with_nan_for_empty(knots)*0.514444444444
+    return safe_float(knots)*0.514444444444
 
 # Need this wrapper because math.radians doesn't auto convert inputs
 def convert_deg_to_rads(degs):
-    return math.radians(convert_float_with_nan_for_empty(degs))
+    return math.radians(safe_float(degs))
 
 """Format for this is a sentence identifier (e.g. "GGA") as the key, with a
 tuple of tuples where each tuple is a field name, conversion function and index
@@ -89,9 +89,9 @@ parse_maps = {
             ("latitude_direction", str, 3),
             ("longitude", convert_longitude, 4),
             ("longitude_direction", str, 5),
-            ("altitude", convert_float_with_nan_for_empty, 9),
-            ("mean_sea_level", convert_float_with_nan_for_empty, 11),
-            ("hdop", convert_float_with_nan_for_empty, 8),
+            ("altitude", safe_float, 9),
+            ("mean_sea_level", safe_float, 11),
+            ("hdop", safe_float, 8),
             ("num_satellites", int, 7),
             ("utc_time", convert_time, 1),
             ],
