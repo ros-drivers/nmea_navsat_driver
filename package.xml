@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>nmea_navsat_driver</name>
-  <version>0.3.3</version>
+  <version>0.4.0</version>
   <description>
 	Package to parse NMEA strings and publish a very simple GPS messgae. Does not require the GPSD deamon.
   </description>

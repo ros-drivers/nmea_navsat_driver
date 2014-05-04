@@ -2,6 +2,11 @@
 Change log for nmea_navsat_driver package
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.4.0 (2014-05-04)
+-------------------
+* Initial release for Indigo
+* Fix #5: Empty fields spam rosout with warnings. Driver now outputs sensor_msgs/NavSatFix messages that may contain NaNs in position and covariance when receiving invalid fixes from the device.
+
 0.3.3 (2013-10-08)
 -------------------
 * Allow the driver to output velocity information anytime an RMC message is received
