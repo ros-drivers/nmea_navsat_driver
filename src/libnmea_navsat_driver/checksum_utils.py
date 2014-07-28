@@ -30,6 +30,7 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+
 # Check the NMEA sentence checksum. Return True if passes and False if failed
 def check_nmea_checksum(nmea_sentence):
     split_sentence = nmea_sentence.split('*')
@@ -44,6 +45,4 @@ def check_nmea_checksum(nmea_sentence):
     for c in data_to_checksum:
         checksum ^= ord(c)
 
-    return ("%02X" % checksum)  == transmitted_checksum.upper()
-
-
+    return ("%02X" % checksum) == transmitted_checksum.upper()

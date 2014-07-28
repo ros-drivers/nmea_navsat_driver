@@ -40,14 +40,14 @@ from geometry_msgs.msg import TwistStamped
 from libnmea_navsat_driver.checksum_utils import check_nmea_checksum
 import libnmea_navsat_driver.parser
 
+
 class RosNMEADriver(object):
     def __init__(self):
         self.fix_pub = rospy.Publisher('fix', NavSatFix, queue_size=1)
         self.vel_pub = rospy.Publisher('vel', TwistStamped, queue_size=1)
         self.time_ref_pub = rospy.Publisher('time_reference', TimeReference, queue_size=1)
 
-        self.time_ref_source = rospy.get_param('~time_ref_source',
-                None)
+        self.time_ref_source = rospy.get_param('~time_ref_source', None)
         self.use_RMC = rospy.get_param('~useRMC', False)
 
     # Returns True if we successfully did something with the passed in
@@ -55,13 +55,12 @@ class RosNMEADriver(object):
     def add_sentence(self, nmea_string, frame_id, timestamp=None):
         if not check_nmea_checksum(nmea_string):
             rospy.logwarn("Received a sentence with an invalid checksum. " +
-                "Sentence was: %s" % repr(nmea_string))
+                          "Sentence was: %s" % repr(nmea_string))
             return False
 
         parsed_sentence = libnmea_navsat_driver.parser.parse_nmea_sentence(nmea_string)
         if not parsed_sentence:
-            rospy.logdebug("Failed to parse NMEA sentence. Sentece was: %s" %
-                nmea_string)
+            rospy.logdebug("Failed to parse NMEA sentence. Sentece was: %s" % nmea_string)
             return False
 
         if timestamp:
@@ -108,9 +107,9 @@ class RosNMEADriver(object):
             current_fix.longitude = longitude
 
             hdop = data['hdop']
-            current_fix.position_covariance[0] = hdop**2
-            current_fix.position_covariance[4] = hdop**2
-            current_fix.position_covariance[8] = (2*hdop)**2 # FIXME
+            current_fix.position_covariance[0] = hdop ** 2
+            current_fix.position_covariance[4] = hdop ** 2
+            current_fix.position_covariance[8] = (2 * hdop) ** 2  # FIXME
             current_fix.position_covariance_type = \
                 NavSatFix.COVARIANCE_TYPE_APPROXIMATED
 
@@ -170,6 +169,7 @@ class RosNMEADriver(object):
             return False
 
     """Helper method for getting the frame_id with the correct TF prefix"""
+
     @staticmethod
     def get_frame_id():
         frame_id = rospy.get_param('~frame_id', 'gps')
