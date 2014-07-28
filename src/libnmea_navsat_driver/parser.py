@@ -109,8 +109,6 @@ parse_maps = {
             ]
         }
 
-logged_sentence_types = set()
-
 def parse_nmea_sentence(nmea_sentence):
     # Check for a valid nmea sentence
     if not re.match('^\$GP.*\*[0-9A-Fa-f]{2}$', nmea_sentence):
@@ -123,10 +121,8 @@ def parse_nmea_sentence(nmea_sentence):
     sentence_type = fields[0][3:]
 
     if not sentence_type in parse_maps:
-        if not sentence_type in logged_sentence_types:
-            logger.debug("Sentence type %s not in parse map, ignoring."
-                    % repr(sentence_type))
-            logged_sentence_types.add(sentence_type)
+        logger.debug("Sentence type %s not in parse map, ignoring."
+                % repr(sentence_type))
         return False
 
     parse_map = parse_maps[sentence_type]
