@@ -34,6 +34,8 @@ import re
 import time
 import calendar
 import math
+import logging
+logger = logging.getLogger('rosout')
 
 def safe_float(field):
     try:
@@ -110,7 +112,8 @@ parse_maps = {
 def parse_nmea_sentence(nmea_sentence):
     # Check for a valid nmea sentence
     if not re.match('^\$GP.*\*[0-9A-Fa-f]{2}$', nmea_sentence):
-        #print "Regex didn't match"
+        logger.debug("Regex didn't match, sentence not valid NMEA? Sentence was: %s"
+                % repr(nmea_sentence))
         return False
     fields = [field.strip(',') for field in nmea_sentence.split(',')]
 
@@ -118,8 +121,8 @@ def parse_nmea_sentence(nmea_sentence):
     sentence_type = fields[0][3:]
 
     if not sentence_type in parse_maps:
-        #print sentence_type
-        #print "Sentence type not in parse map"
+        logger.debug("Sentence type %s not in parse map, ignoring."
+                % repr(sentence_type))
         return False
 
     parse_map = parse_maps[sentence_type]
