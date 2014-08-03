@@ -2,7 +2,7 @@
 Change log for nmea_navsat_driver package
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
+0.4.1 (2014-08-03)
 ------------------
 * Add debug logging output to the parser (PR #8, Mike Purvis)
 * Add queue size arguement to publishers to fix warning on Indigo (PR #9, Mike Purvis)
