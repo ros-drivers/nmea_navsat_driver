@@ -44,11 +44,13 @@ def safe_float(field):
     except ValueError:
         return float('NaN')
 
+
 def safe_int(field):
     try:
         return int(field)
     except ValueError:
         return 0
+
 
 def convert_latitude(field):
     return safe_float(field[0:2]) + safe_float(field[2:]) / 60.0
