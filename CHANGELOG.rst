@@ -2,8 +2,8 @@
 Change log for nmea_navsat_driver package
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.5.0 (2015-04-23)
+------------------
 * Release to Jade.
 
 0.4.2 (2015-04-23)
