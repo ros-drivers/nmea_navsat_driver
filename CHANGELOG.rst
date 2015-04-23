@@ -2,8 +2,8 @@
 Change log for nmea_navsat_driver package
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.4.2 (2015-04-23)
+------------------
 * Fix remaining parse problem with NovAtel receivers (empty field specified for num_satellite).
 
 0.4.1 (2014-08-03)
