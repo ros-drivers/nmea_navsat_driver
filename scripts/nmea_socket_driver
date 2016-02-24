@@ -77,13 +77,15 @@ if __name__ == '__main__':
             break
 
         # strip the data
-        data = data.strip()
+        data_list = data.strip().split("\n")
 
-        try:
-            driver.add_sentence(data, frame_id)
-        except ValueError as e:
-            rospy.logwarn("Value error, likely due to missing fields in the NMEA message. "
-                          "Error was: %s. Please report this issue at github.com/ros-drivers/nmea_navsat_driver, "
-                          "including a bag file with the NMEA sentences that caused it." % e)
+        for data in data_list:
+
+            try:
+                driver.add_sentence(data, frame_id)
+            except ValueError as e:
+                rospy.logwarn("Value error, likely due to missing fields in the NMEA message. "
+                            "Error was: %s. Please report this issue at github.com/ros-drivers/nmea_navsat_driver, "
+                            "including a bag file with the NMEA sentences that caused it." % e)
 
     _socket.close()  # Close socket
