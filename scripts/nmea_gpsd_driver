@@ -55,17 +55,16 @@ if __name__ == '__main__':
 
     try:
         # Create a socket
-        rospy.loginfo("Connecting to NMEA socket on %s:%s" % (local_hostname, local_port))
+        rospy.loginfo("Connecting to GPSD server on %s:%s" % (local_hostname, local_port))
         _socket = socket.create_connection((local_hostname, local_port))
 
         # Set timeout
         _socket.settimeout(timeout)
-        
-        watch_msg = "?WATCH="+'{"class":"WATCH","enable":true,"json":false,"nmea":true,"raw":2}'
+
+        watch_msg = """?WATCH={"class":"WATCH","enable":true,"json":false,"nmea":true,"raw":2}"""
         _socket.sendall(watch_msg)
     except socket.error, exc:
         rospy.logerr("Caught exception socket.error : %s" % exc)
-        raise
         sys.exit(1)
 
     driver = libnmea_navsat_driver.driver.RosNMEADriver()
