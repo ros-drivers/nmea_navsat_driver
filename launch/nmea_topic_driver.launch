@@ -1,0 +1,13 @@
+<launch>
+   <node pkg="nmea_navsat_driver" type="nmea_topic_serial_reader" name="nmea_topic_serial_reader">
+     <param name="baud" value="115200" />
+   </node>
+   <node pkg="nmea_navsat_driver" type="nmea_topic_driver" name="nmea_topic_driver" />
+   
+   <node pkg="diagnostic_aggregator" type="aggregator_node" name="diagnostic_aggregator" >
+      <rosparam command="delete" param="/diagnostic_aggregator" />
+      <rosparam command="load" file="$(find nmea_navsat_driver)/config/nmea_navsat_diags.yaml" />
+   </node>
+
+   <node pkg="rqt_robot_monitor" type="rqt_robot_monitor" name="rqt_robot_monitor" />
+</launch>
