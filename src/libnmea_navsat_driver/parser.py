@@ -130,6 +130,9 @@ parse_maps = {
         ("lat_std_dev", safe_float, 6),
         ("lon_std_dev", safe_float, 7),
         ("alt_std_dev", safe_float, 8),
+        ],
+    "HDT": [
+        ("heading", safe_float, 1),
         ]
     }
 
