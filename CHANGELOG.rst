@@ -2,6 +2,10 @@
 Change log for nmea_navsat_driver package
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.5.0 (2015-04-23)
+------------------
+* Release to Jade.
+
 0.4.2 (2015-04-23)
 ------------------
 * Fix remaining parse problem with NovAtel receivers (empty field specified for num_satellite).
