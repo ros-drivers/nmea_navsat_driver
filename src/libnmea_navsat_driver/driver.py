@@ -89,6 +89,10 @@ class RosNMEADriver(object):
                 current_fix.status.status = NavSatStatus.STATUS_SBAS_FIX
             elif gps_qual in (4, 5):
                 current_fix.status.status = NavSatStatus.STATUS_GBAS_FIX
+            elif gps_qual == 9:
+                # Support specifically for NOVATEL OEM4 recievers which report WAAS fix as 9
+                # http://www.novatel.com/support/known-solutions/which-novatel-position-types-correspond-to-the-gga-quality-indicator/
+                current_fix.status.status = NavSatStatus.STATUS_SBAS_FIX
             else:
                 current_fix.status.status = NavSatStatus.STATUS_NO_FIX
 
