@@ -49,6 +49,8 @@ class RosNMEADriver(object):
 
         self.time_ref_source = rospy.get_param('~time_ref_source', None)
         self.use_RMC = rospy.get_param('~useRMC', False)
+        self.valid_fix = False
+        self.last_valid_fix_time = None
 
     # Returns True if we successfully did something with the passed in
     # nmea_string
@@ -96,6 +98,11 @@ class RosNMEADriver(object):
             else:
                 current_fix.status.status = NavSatStatus.STATUS_NO_FIX
 
+            if gps_qual > 0:
+                self.valid_fix = True
+            else:
+                self.valid_fix = False
+
             current_fix.status.service = NavSatStatus.SERVICE_GPS
 
             current_fix.header.stamp = current_time
@@ -125,7 +132,22 @@ class RosNMEADriver(object):
 
             if not math.isnan(data['utc_time']):
                 current_time_ref.time_ref = rospy.Time.from_sec(data['utc_time'])
+                self.last_valid_fix_time = current_time_ref
                 self.time_ref_pub.publish(current_time_ref)
+
+        elif not self.use_RMC and 'VTG' in parsed_sentence:
+            data = parsed_sentence['VTG']
+
+            # Only report VTG data when you've received a valid GGA fix as well.
+            if self.valid_fix:
+                current_vel = TwistStamped()
+                current_vel.header.stamp = current_time
+                current_vel.header.frame_id = frame_id
+                current_vel.twist.linear.x = data['speed'] * \
+                                             math.sin(data['true_course'])
+                current_vel.twist.linear.y = data['speed'] * \
+                                             math.cos(data['true_course'])
+                self.vel_pub.publish(current_vel)
 
         elif 'RMC' in parsed_sentence:
             data = parsed_sentence['RMC']
