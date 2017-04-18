@@ -63,7 +63,7 @@ if __name__ == '__main__':
         # Set timeout
         _socket.settimeout(timeout)
     except socket.error, exc:
-        rospy.logerr("Caught exception socket.error : %s" % exc)
+        rospy.logerr("Caught exception socket.error when setting up socket: %s" % exc)
         sys.exit(1)
 
     driver = libnmea_navsat_driver.driver.RosNMEADriver()
@@ -73,7 +73,7 @@ if __name__ == '__main__':
         try:
             data, remote_address = _socket.recvfrom(buffer_size)
         except socket.error, exc:
-            rospy.logerr("Caught exception socket.error : %s" % exc)
+            rospy.logerr("Caught exception socket.error during recvfrom: %s" % exc)
             break
 
         # strip the data
