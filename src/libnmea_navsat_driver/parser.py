@@ -126,7 +126,7 @@ parse_maps = {
 
 def parse_nmea_sentence(nmea_sentence):
     # Check for a valid nmea sentence
-    if not re.match('^\$(GP|GN).*\*[0-9A-Fa-f]{2}$', nmea_sentence):
+    if not re.match('^\$(GP|GN|GL|GA|II|IN|GB|BD|QZ).*\*[0-9A-Fa-f]{2}$', nmea_sentence):
         logger.debug("Regex didn't match, sentence not valid NMEA? Sentence was: %s"
                      % repr(nmea_sentence))
         return False
