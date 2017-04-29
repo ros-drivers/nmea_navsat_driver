@@ -190,7 +190,7 @@ class RosNMEADriver(object):
                 self.time_ref_pub.publish(current_time_ref)
 
         elif 'RMC' in parsed_sentence:
-            data = parsed_sentence['rmc']
+            data = parsed_sentence['RMC']
 
             # Only publish a fix from RMC if the use_RMC flag is set.
             if self.use_RMC:
