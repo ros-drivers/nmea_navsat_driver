@@ -36,6 +36,7 @@ import rospy
 
 from sensor_msgs.msg import NavSatFix, NavSatStatus, TimeReference
 from geometry_msgs.msg import TwistStamped
+from diagnostic_updater import Updater, FrequencyStatus, FrequencyStatusParam
 
 from libnmea_navsat_driver.checksum_utils import check_nmea_checksum
 import libnmea_navsat_driver.parser
@@ -49,6 +50,10 @@ class RosNMEADriver(object):
 
         self.time_ref_source = rospy.get_param('~time_ref_source', None)
         self.use_RMC = rospy.get_param('~useRMC', False)
+        self.diagnostic_updater = Updater()
+        self.diagnostic_updater.setHardwareID("none")
+        self.frequency_status = FrequencyStatus(FrequencyStatusParam({'min': 5.0, 'max': 5.0}))
+        self.diagnostic_updater.add(self.frequency_status)
 
     # Returns True if we successfully did something with the passed in
     # nmea_string
@@ -118,6 +123,8 @@ class RosNMEADriver(object):
             current_fix.altitude = altitude
 
             self.fix_pub.publish(current_fix)
+            self.frequency_status.tick()
+            self.diagnostic_updater.update()
 
             if not math.isnan(data['utc_time']):
                 current_time_ref.time_ref = rospy.Time.from_sec(data['utc_time'])

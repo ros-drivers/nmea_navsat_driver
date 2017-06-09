@@ -67,6 +67,7 @@ if __name__ == '__main__':
         sys.exit(1)
 
     driver = libnmea_navsat_driver.driver.RosNMEADriver()
+    driver.diagnostic_updater.setHardwareID("%s:%d" % (local_ip, local_port))
 
     while not rospy.is_shutdown():
 
