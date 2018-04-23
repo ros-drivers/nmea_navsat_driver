@@ -49,7 +49,19 @@ class RosNMEADriver(object):
 
         self.time_ref_source = rospy.get_param('~time_ref_source', None)
         self.use_RMC = rospy.get_param('~useRMC', False)
-
+        
+        self.fix_type = 'invalid'
+        
+        # epe = estimated position error
+        self.default_epe_quality0 = rospy.get_param('~epe_quality0', 1000000)
+        self.default_epe_quality1 = rospy.get_param('~epe_quality1', 4.0)
+        self.default_epe_quality2 = rospy.get_param('~epe_quality2', 0.1)
+        self.default_epe_quality4 = rospy.get_param('~epe_quality4', 0.02)
+        self.default_epe_quality5 = rospy.get_param('~epe_quality5', 4.0)
+        self.default_epe_quality9 = rospy.get_param('~epe_quality9', 3.0)
+        self.default_epe = self.default_epe_quality0
+        self.using_receiver_epe = False
+        
     # Returns True if we successfully did something with the passed in
     # nmea_string
     def add_sentence(self, nmea_string, frame_id, timestamp=None):
@@ -60,7 +72,7 @@ class RosNMEADriver(object):
 
         parsed_sentence = libnmea_navsat_driver.parser.parse_nmea_sentence(nmea_string)
         if not parsed_sentence:
-            rospy.logdebug("Failed to parse NMEA sentence. Sentece was: %s" % nmea_string)
+            rospy.logdebug("Failed to parse NMEA sentence. Sentence was: %s" % nmea_string)
             return False
 
         if timestamp:
@@ -79,22 +91,41 @@ class RosNMEADriver(object):
             current_time_ref.source = frame_id
 
         if not self.use_RMC and 'GGA' in parsed_sentence:
+            current_fix.position_covariance_type = \
+                NavSatFix.COVARIANCE_TYPE_APPROXIMATED
+              
             data = parsed_sentence['GGA']
             gps_qual = data['fix_type']
-            if gps_qual == 0:
+            if gps_qual == 0:      # No fix, reset covariance
                 current_fix.status.status = NavSatStatus.STATUS_NO_FIX
-            elif gps_qual == 1:
+                self.default_epe = self.default_epe_quality0
+                current_fix.position_covariance_type = \
+                    NavSatFix.COVARIANCE_TYPE_UNKNOWN
+                self.using_receiver_epe = False
+                self.fix_type = 'invalid'
+            elif gps_qual == 1:    # SPS
                 current_fix.status.status = NavSatStatus.STATUS_FIX
-            elif gps_qual == 2:
+                self.default_epe = self.default_epe_quality1
+                self.fix_type = 'SPS'
+            elif gps_qual == 2:    # DGPS
                 current_fix.status.status = NavSatStatus.STATUS_SBAS_FIX
-            elif gps_qual in (4, 5):
+                self.default_epe = self.default_epe_quality2
+                self.fix_type = 'DGPS'
+            elif gps_qual == 4:    # RTK Fixed
                 current_fix.status.status = NavSatStatus.STATUS_GBAS_FIX
-            elif gps_qual == 9:
-                # Support specifically for NOVATEL OEM4 recievers which report WAAS fix as 9
-                # http://www.novatel.com/support/known-solutions/which-novatel-position-types-correspond-to-the-gga-quality-indicator/
-                current_fix.status.status = NavSatStatus.STATUS_SBAS_FIX
+                self.default_epe = self.default_epe_quality4
+                self.fix_type = 'RTK Fix'
+            elif gps_qual == 5:    # RTK Float
+                current_fix.status.status = NavSatStatus.STATUS_GBAS_FIX
+                self.default_epe = self.default_epe_quality5
+                self.fix_type = 'RTK Float'
+            elif gps_qual == 9:    # WAAS
+                current_fix.status.status = NavSatStatus.STATUS_GBAS_FIX
+                self.default_epe = self.default_epe_quality9
+                self.fix_type = 'WAAS'
             else:
                 current_fix.status.status = NavSatStatus.STATUS_NO_FIX
+                self.fix_type = 'Unknown'
 
             current_fix.status.service = NavSatStatus.SERVICE_GPS
 
@@ -110,17 +141,22 @@ class RosNMEADriver(object):
                 longitude = -longitude
             current_fix.longitude = longitude
 
-            hdop = data['hdop']
-            current_fix.position_covariance[0] = hdop ** 2
-            current_fix.position_covariance[4] = hdop ** 2
-            current_fix.position_covariance[8] = (2 * hdop) ** 2  # FIXME
-            current_fix.position_covariance_type = \
-                NavSatFix.COVARIANCE_TYPE_APPROXIMATED
-
-            # Altitude is above ellipsoid, so adjust for mean-sea-level
             altitude = data['altitude'] + data['mean_sea_level']
             current_fix.altitude = altitude
+            
+            # use default epe std_dev unless we've received a GST sentence with epes
+            if not self.using_receiver_epe or math.isnan(self.lon_std_dev):
+                self.lon_std_dev = self.default_epe
+            if not self.using_receiver_epe or math.isnan(self.lat_std_dev):
+                self.lat_std_dev = self.default_epe
+            if not self.using_receiver_epe or math.isnan(self.alt_std_dev):
+                self.alt_std_dev = self.default_epe * 2
 
+            hdop = data['hdop']
+            current_fix.position_covariance[0] = (hdop * self.lon_std_dev) ** 2
+            current_fix.position_covariance[4] = (hdop * self.lat_std_dev) ** 2
+            current_fix.position_covariance[8] = (hdop * self.alt_std_dev) ** 2  # FIXME
+                        
             self.fix_pub.publish(current_fix)
 
             if not math.isnan(data['utc_time']):
@@ -169,6 +205,15 @@ class RosNMEADriver(object):
                 current_vel.twist.linear.y = data['speed'] * \
                     math.cos(data['true_course'])
                 self.vel_pub.publish(current_vel)
+        elif 'GST' in parsed_sentence:
+            data = parsed_sentence['GST']
+
+            # Use receiver-provided error estimate if available
+            self.using_receiver_epe = True
+            self.lon_std_dev = data['lon_std_dev']
+            self.lat_std_dev = data['lat_std_dev']
+            self.alt_std_dev = data['alt_std_dev']
+
         else:
             return False
 
