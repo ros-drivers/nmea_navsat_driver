@@ -42,6 +42,7 @@ import libnmea_navsat_driver.parser
 
 
 class RosNMEADriver(object):
+
     def __init__(self):
         self.fix_pub = rospy.Publisher('fix', NavSatFix, queue_size=1)
         self.vel_pub = rospy.Publisher('vel', TwistStamped, queue_size=1)
@@ -49,9 +50,7 @@ class RosNMEADriver(object):
 
         self.time_ref_source = rospy.get_param('~time_ref_source', None)
         self.use_RMC = rospy.get_param('~useRMC', False)
-        
-        self.fix_type = 'invalid'
-        
+
         # epe = estimated position error
         self.default_epe_quality0 = rospy.get_param('~epe_quality0', 1000000)
         self.default_epe_quality1 = rospy.get_param('~epe_quality1', 4.0)
@@ -59,9 +58,56 @@ class RosNMEADriver(object):
         self.default_epe_quality4 = rospy.get_param('~epe_quality4', 0.02)
         self.default_epe_quality5 = rospy.get_param('~epe_quality5', 4.0)
         self.default_epe_quality9 = rospy.get_param('~epe_quality9', 3.0)
-        self.default_epe = self.default_epe_quality0
         self.using_receiver_epe = False
         
+        """Format for this dictionary is the fix type from a GGA message as the key, with
+        each entry containing a tuple consisting of a default estimated
+        position error, a NavSatStatus value, and a NavSatFix covariance value."""
+        self.gps_qualities = {
+          # Unknown
+          -1: [
+              self.default_epe_quality0,
+              NavSatStatus.STATUS_NO_FIX,
+              NavSatFix.COVARIANCE_TYPE_UNKNOWN
+              ],
+          # Invalid
+          0: [
+              self.default_epe_quality0,
+              NavSatStatus.STATUS_NO_FIX,
+              NavSatFix.COVARIANCE_TYPE_UNKNOWN
+              ],
+          # SPS
+          1: [
+              self.default_epe_quality1,
+              NavSatStatus.STATUS_FIX,
+              NavSatFix.COVARIANCE_TYPE_APPROXIMATED
+              ],
+          # DGPS
+          2: [
+              self.default_epe_quality2,
+              NavSatStatus.STATUS_SBAS_FIX,
+              NavSatFix.COVARIANCE_TYPE_APPROXIMATED
+              ],
+          # RTK Fix
+          4: [
+              self.default_epe_quality4,
+              NavSatStatus.STATUS_GBAS_FIX,
+              NavSatFix.COVARIANCE_TYPE_APPROXIMATED
+              ],
+          # RTK Float
+          5: [
+              self.default_epe_quality5,
+              NavSatStatus.STATUS_GBAS_FIX,
+              NavSatFix.COVARIANCE_TYPE_APPROXIMATED
+              ],
+          # WAAS
+          9: [
+              self.default_epe_quality9,
+              NavSatStatus.STATUS_GBAS_FIX,
+              NavSatFix.COVARIANCE_TYPE_APPROXIMATED
+              ]
+          }
+
     # Returns True if we successfully did something with the passed in
     # nmea_string
     def add_sentence(self, nmea_string, frame_id, timestamp=None):
@@ -95,41 +141,14 @@ class RosNMEADriver(object):
                 NavSatFix.COVARIANCE_TYPE_APPROXIMATED
               
             data = parsed_sentence['GGA']
-            gps_qual = data['fix_type']
-            if gps_qual == 0:      # No fix, reset covariance
-                current_fix.status.status = NavSatStatus.STATUS_NO_FIX
-                self.default_epe = self.default_epe_quality0
-                current_fix.position_covariance_type = \
-                    NavSatFix.COVARIANCE_TYPE_UNKNOWN
-                self.using_receiver_epe = False
-                self.fix_type = 'invalid'
-            elif gps_qual == 1:    # SPS
-                current_fix.status.status = NavSatStatus.STATUS_FIX
-                self.default_epe = self.default_epe_quality1
-                self.fix_type = 'SPS'
-            elif gps_qual == 2:    # DGPS
-                current_fix.status.status = NavSatStatus.STATUS_SBAS_FIX
-                self.default_epe = self.default_epe_quality2
-                self.fix_type = 'DGPS'
-            elif gps_qual == 4:    # RTK Fixed
-                current_fix.status.status = NavSatStatus.STATUS_GBAS_FIX
-                self.default_epe = self.default_epe_quality4
-                self.fix_type = 'RTK Fix'
-            elif gps_qual == 5:    # RTK Float
-                current_fix.status.status = NavSatStatus.STATUS_GBAS_FIX
-                self.default_epe = self.default_epe_quality5
-                self.fix_type = 'RTK Float'
-            elif gps_qual == 9:    # WAAS
-                current_fix.status.status = NavSatStatus.STATUS_GBAS_FIX
-                self.default_epe = self.default_epe_quality9
-                self.fix_type = 'WAAS'
-            else:
-                current_fix.status.status = NavSatStatus.STATUS_NO_FIX
-                self.fix_type = 'Unknown'
-
+            fix_type = data['fix_type']
+            if not (fix_type in self.gps_qualities):
+              fix_type = -1
+            gps_qual = self.gps_qualities[fix_type]
+            default_epe = gps_qual[0];
+            current_fix.status.status = gps_qual[1]
+            current_fix.position_covariance_type = gps_qual[2];
             current_fix.status.service = NavSatStatus.SERVICE_GPS
-
-            current_fix.header.stamp = current_time
 
             latitude = data['latitude']
             if data['latitude_direction'] == 'S':
@@ -141,21 +160,22 @@ class RosNMEADriver(object):
                 longitude = -longitude
             current_fix.longitude = longitude
 
+            # Altitude is above ellipsoid, so adjust for mean-sea-level
             altitude = data['altitude'] + data['mean_sea_level']
             current_fix.altitude = altitude
             
             # use default epe std_dev unless we've received a GST sentence with epes
             if not self.using_receiver_epe or math.isnan(self.lon_std_dev):
-                self.lon_std_dev = self.default_epe
+                self.lon_std_dev = default_epe
             if not self.using_receiver_epe or math.isnan(self.lat_std_dev):
-                self.lat_std_dev = self.default_epe
+                self.lat_std_dev = default_epe
             if not self.using_receiver_epe or math.isnan(self.alt_std_dev):
-                self.alt_std_dev = self.default_epe * 2
+                self.alt_std_dev = default_epe * 2
 
             hdop = data['hdop']
             current_fix.position_covariance[0] = (hdop * self.lon_std_dev) ** 2
             current_fix.position_covariance[4] = (hdop * self.lat_std_dev) ** 2
-            current_fix.position_covariance[8] = (hdop * self.alt_std_dev) ** 2  # FIXME
+            current_fix.position_covariance[8] = (2 * hdop * self.alt_std_dev) ** 2  # FIXME
                         
             self.fix_pub.publish(current_fix)
 

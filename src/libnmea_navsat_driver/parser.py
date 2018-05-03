@@ -141,8 +141,6 @@ def parse_nmea_sentence(nmea_sentence):
                      % repr(nmea_sentence))
         return False
     fields = [field.strip(',') for field in nmea_sentence.split(',')]
-    last_two_fields = fields[-1].split('*')
-    fields[-1] = last_two_fields[0]
 
     # Ignore the $ and talker ID portions (e.g. GP)
     sentence_type = fields[0][3:]
