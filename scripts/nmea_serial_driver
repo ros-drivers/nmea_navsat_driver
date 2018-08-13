@@ -55,5 +55,5 @@ if __name__ == '__main__':
             except ValueError as e:
                 rospy.logwarn("Value error, likely due to missing fields in the NMEA message. Error was: %s. Please report this issue at github.com/ros-drivers/nmea_navsat_driver, including a bag file with the NMEA sentences that caused it." % e)
 
-    except rospy.ROSInterruptException:
+    except (rospy.ROSInterruptException, serial.serialutil.SerialException):
         GPS.close() #Close GPS serial port
