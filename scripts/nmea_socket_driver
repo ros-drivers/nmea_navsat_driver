@@ -53,39 +53,44 @@ if __name__ == '__main__':
 
     frame_id = libnmea_navsat_driver.driver.RosNMEADriver.get_frame_id()
 
-    try:
-        # Create a socket
-        socket_ = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-
-        # Bind the socket to the port
-        socket_.bind((local_ip, local_port))
-
-        # Set timeout
-        socket_.settimeout(timeout)
-    except socket.error, exc:
-        rospy.logerr("Caught exception socket.error when setting up socket: %s" % exc)
-        sys.exit(1)
-
     driver = libnmea_navsat_driver.driver.RosNMEADriver()
 
+    # Connection-loop: connect and keep receiving. If receiving fails, reconnect
     while not rospy.is_shutdown():
-
         try:
-            data, remote_address = socket_.recvfrom(buffer_size)
+            # Create a socket
+            socket_ = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+            # Bind the socket to the port
+            socket_.bind((local_ip, local_port))
+
+            # Set timeout
+            socket_.settimeout(timeout)
         except socket.error, exc:
-            rospy.logerr("Caught exception socket.error during recvfrom: %s" % exc)
-            break
+            rospy.logerr("Caught exception socket.error when setting up socket: %s" % exc)
+            sys.exit(1)
 
-        # strip the data
-        data_list = data.strip().split("\n")
-
-        for data in data_list:
-
+        # recv-loop: When we're connected, keep receiving stuff until that fails
+        while not rospy.is_shutdown():
             try:
-                driver.add_sentence(data, frame_id)
-            except ValueError as e:
-                rospy.logwarn("Value error, likely due to missing fields in the NMEA message. "
-                            "Error was: %s. Please report this issue at github.com/ros-drivers/nmea_navsat_driver, "
-                            "including a bag file with the NMEA sentences that caused it." % e)
+                data, remote_address = socket_.recvfrom(buffer_size)
 
-    socket_.close()  # Close socket
+                # strip the data
+                data_list = data.strip().split("\n")
+
+                for data in data_list:
+
+                    try:
+                        driver.add_sentence(data, frame_id)
+                    except ValueError as e:
+                        rospy.logwarn("Value error, likely due to missing fields in the NMEA message. "
+                                    "Error was: %s. Please report this issue at github.com/ros-drivers/nmea_navsat_driver, "
+                                    "including a bag file with the NMEA sentences that caused it." % e)
+
+            except socket.error, exc:
+                rospy.logerr("Caught exception socket.error during recvfrom: %s" % exc)
+                socket_.close()
+                # This will break out of the recv-loop so we start another iteration of the connection-loop
+                break
+
+        socket_.close()  # Close socket
