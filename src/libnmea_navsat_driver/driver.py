@@ -59,7 +59,7 @@ class RosNMEADriver(object):
         self.default_epe_quality5 = rospy.get_param('~epe_quality5', 4.0)
         self.default_epe_quality9 = rospy.get_param('~epe_quality9', 3.0)
         self.using_receiver_epe = False
-        
+
         self.lon_std_dev = float("nan")
         self.lat_std_dev = float("nan")
         self.alt_std_dev = float("nan")
