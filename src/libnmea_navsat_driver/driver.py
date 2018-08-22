@@ -60,6 +60,10 @@ class RosNMEADriver(object):
         self.default_epe_quality9 = rospy.get_param('~epe_quality9', 3.0)
         self.using_receiver_epe = False
         
+        self.lon_std_dev = float("nan")
+        self.lat_std_dev = float("nan")
+        self.alt_std_dev = float("nan")
+        
         """Format for this dictionary is the fix type from a GGA message as the key, with
         each entry containing a tuple consisting of a default estimated
         position error, a NavSatStatus value, and a NavSatFix covariance value."""
