@@ -63,7 +63,7 @@ class RosNMEADriver(object):
         self.lon_std_dev = float("nan")
         self.lat_std_dev = float("nan")
         self.alt_std_dev = float("nan")
-        
+
         """Format for this dictionary is the fix type from a GGA message as the key, with
         each entry containing a tuple consisting of a default estimated
         position error, a NavSatStatus value, and a NavSatFix covariance value."""
@@ -167,7 +167,7 @@ class RosNMEADriver(object):
             # Altitude is above ellipsoid, so adjust for mean-sea-level
             altitude = data['altitude'] + data['mean_sea_level']
             current_fix.altitude = altitude
-            
+
             # use default epe std_dev unless we've received a GST sentence with epes
             if not self.using_receiver_epe or math.isnan(self.lon_std_dev):
                 self.lon_std_dev = default_epe
@@ -180,7 +180,7 @@ class RosNMEADriver(object):
             current_fix.position_covariance[0] = (hdop * self.lon_std_dev) ** 2
             current_fix.position_covariance[4] = (hdop * self.lat_std_dev) ** 2
             current_fix.position_covariance[8] = (2 * hdop * self.alt_std_dev) ** 2  # FIXME
-                        
+
             self.fix_pub.publish(current_fix)
 
             if not math.isnan(data['utc_time']):
