@@ -143,7 +143,7 @@ class RosNMEADriver(object):
         if not self.use_RMC and 'GGA' in parsed_sentence:
             current_fix.position_covariance_type = \
                 NavSatFix.COVARIANCE_TYPE_APPROXIMATED
-              
+
             data = parsed_sentence['GGA']
             fix_type = data['fix_type']
             if not (fix_type in self.gps_qualities):
