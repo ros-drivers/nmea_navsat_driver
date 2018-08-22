@@ -18,12 +18,11 @@
 
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>roslint</build_depend>
-  <run_depend>rospy</run_depend>
-  <run_depend>python-serial</run_depend>
-  <run_depend>geometry_msgs</run_depend>
-  <run_depend>nmea_msgs</run_depend>
-  <run_depend>sensor_msgs</run_depend>
-  <run_depend>tf</run_depend>
+  <exec_depend>rospy</exec_depend>
+  <exec_depend>python-serial</exec_depend>
+  <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>nmea_msgs</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
 
   <test_depend>roslint</test_depend>
   <!-- The export tag contains other, unspecified, tags -->
