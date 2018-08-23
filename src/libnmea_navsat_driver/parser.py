@@ -122,8 +122,8 @@ parse_maps = {
         ("true_course", convert_deg_to_rads, 8),
         ],
     "VTG":[
-        ("true_course",safe_float,1),
-        ("speed",convert_knots_to_mps,5)
+        ("true_course", safe_float,1),
+        ("speed", convert_knots_to_mps,5)
         ]
     }
 
