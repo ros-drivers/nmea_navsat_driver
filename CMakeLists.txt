@@ -8,6 +8,7 @@ catkin_package()
 
 install(PROGRAMS
    scripts/nmea_serial_driver
+   scripts/nmea_socket_driver
    scripts/nmea_topic_driver
    scripts/nmea_topic_serial_reader
    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
