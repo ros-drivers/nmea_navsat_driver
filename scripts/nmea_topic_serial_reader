@@ -42,7 +42,7 @@ from libnmea_navsat_driver.driver import RosNMEADriver
 if __name__ == '__main__':
     rospy.init_node('nmea_topic_serial_reader')
 
-    nmea_pub = rospy.Publisher("nmea_sentence", Sentence)
+    nmea_pub = rospy.Publisher("nmea_sentence", Sentence, queue_size=1)
 
     serial_port = rospy.get_param('~port','/dev/ttyUSB0')
     serial_baud = rospy.get_param('~baud',4800)
