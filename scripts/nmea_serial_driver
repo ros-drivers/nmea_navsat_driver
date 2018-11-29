@@ -55,6 +55,7 @@ if __name__ == '__main__':
             while not rospy.is_shutdown():
                 data = GPS.readline().strip()
                 try:
+                    data = data[data.index('$'):] # remove all stuff before the first $. See https://github.com/ros-drivers/nmea_navsat_driver/issues/45#issuecomment-420073153
                     driver.add_sentence(data, frame_id)
                 except ValueError as e:
                     rospy.logwarn("Value error, likely due to missing fields in the NMEA message. Error was: %s. Please report this issue at github.com/ros-drivers/nmea_navsat_driver, including a bag file with the NMEA sentences that caused it." % e)
