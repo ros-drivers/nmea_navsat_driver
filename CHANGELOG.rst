@@ -2,8 +2,8 @@
 Change log for nmea_navsat_driver package
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.5.1 (2018-12-30)
+------------------
 * Add support for IMU aided GPS systems like the Applanix POS/MV, whose NMEA strings typically begin '$IN'. (e.g. $INGGA). Add support for VTG messages, which contain Course Over Ground and Speed Made Good. These are useful when not using RMC messages and you don't have a heading sensor. (`#30 <https://github.com/ros-drivers/nmea_navsat_driver/issues/30>`_/`#58 <https://github.com/ros-drivers/nmea_navsat_driver/issues/58>`_)
 * Add a NMEA socket driver node, which is like the existing serial driver node, but instead of attaching to a TTY handle from a serial port, it listens to a UDP port for NMEA sentences. (`#32 <https://github.com/ros-drivers/nmea_navsat_driver/issues/32>`_)
 * Add code to handle serial exception to allow node to exit cleanly (`#52 <https://github.com/ros-drivers/nmea_navsat_driver/issues/52>`_)
