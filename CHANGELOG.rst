@@ -2,6 +2,18 @@
 Change log for nmea_navsat_driver package
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Add support for IMU aided GPS systems like the Applanix POS/MV, whose NMEA strings typically begin '$IN'. (e.g. $INGGA). Add support for VTG messages, which contain Course Over Ground and Speed Made Good. These are useful when not using RMC messages and you don't have a heading sensor. (`#30 <https://github.com/ros-drivers/nmea_navsat_driver/issues/30>`_/`#58 <https://github.com/ros-drivers/nmea_navsat_driver/issues/58>`_)
+* Add a NMEA socket driver node, which is like the existing serial driver node, but instead of attaching to a TTY handle from a serial port, it listens to a UDP port for NMEA sentences. (`#32 <https://github.com/ros-drivers/nmea_navsat_driver/issues/32>`_)
+* Add code to handle serial exception to allow node to exit cleanly (`#52 <https://github.com/ros-drivers/nmea_navsat_driver/issues/52>`_)
+* Cleanup CMakeLists, package.xml; using package format 2. (`#28 <https://github.com/ros-drivers/nmea_navsat_driver/issues/28>`_)
+* Update maintainer to Ed Venator (`#38 <https://github.com/ros-drivers/nmea_navsat_driver/issues/38>`_)
+* Add GLONASS support
+* Updated driver to accept status of 9 which some novatel recievers report for a WAAS (SBAS) fix.
+  See http://www.novatel.com/support/known-solutions/which-novatel-position-types-correspond-to-the-gga-quality-indicator/
+* Contributors: Ed Venator, Edward Venator, Eric Perko, Loy, Mike Purvis, Patrick Barone, Timo Röhling, Vikrant Shah
+
 0.5.0 (2015-04-23)
 ------------------
 * Release to Jade.
