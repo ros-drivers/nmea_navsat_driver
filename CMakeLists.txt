@@ -14,6 +14,11 @@ install(PROGRAMS
    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
+install(DIRECTORY launch/
+   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch
+   FILES_MATCHING PATTERN "*.launch"
+)
+
 if (CATKIN_ENABLE_TESTING)
   find_package(roslint)
   roslint_python()
