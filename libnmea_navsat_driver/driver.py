@@ -32,35 +32,34 @@
 
 import math
 
-import rospy
-
+import rclpy
+from rclpy.node import Node
 from sensor_msgs.msg import NavSatFix, NavSatStatus, TimeReference
 from geometry_msgs.msg import TwistStamped, QuaternionStamped
-from tf.transformations import quaternion_from_euler
-
+from transforms3d.euler import euler2quat
 from libnmea_navsat_driver.checksum_utils import check_nmea_checksum
-import libnmea_navsat_driver.parser
+from libnmea_navsat_driver import parser
 
 
-class RosNMEADriver(object):
-
+class Ros2NMEADriver(Node):
     def __init__(self):
-        self.fix_pub = rospy.Publisher('fix', NavSatFix, queue_size=1)
-        self.vel_pub = rospy.Publisher('vel', TwistStamped, queue_size=1)
-        self.heading_pub = rospy.Publisher('heading', QuaternionStamped, queue_size=1)
-        self.time_ref_pub = rospy.Publisher('time_reference', TimeReference, queue_size=1)
+        self.fix_pub = rclpy.create_publisher(NavSatFix, 'fix')
+        self.vel_pub = rclpy.create_publisher(TwistStamped, 'vel')
+        self.heading_pub = rclpy.create_publisher(QuaternionStamped, 'heading')
+        self.time_ref_pub = rclpy.create_publisher(TimeReference, 'time_reference')
 
-        self.time_ref_source = rospy.get_param('~time_ref_source', None)
-        self.use_RMC = rospy.get_param('~useRMC', False)
+        self.time_ref_source = self.get_parameter('~time_ref_source').value
+        self.use_RMC = self.get_parameter('~useRMC').value
         self.valid_fix = False
 
         # epe = estimated position error
-        self.default_epe_quality0 = rospy.get_param('~epe_quality0', 1000000)
-        self.default_epe_quality1 = rospy.get_param('~epe_quality1', 4.0)
-        self.default_epe_quality2 = rospy.get_param('~epe_quality2', 0.1)
-        self.default_epe_quality4 = rospy.get_param('~epe_quality4', 0.02)
-        self.default_epe_quality5 = rospy.get_param('~epe_quality5', 4.0)
-        self.default_epe_quality9 = rospy.get_param('~epe_quality9', 3.0)
+        self.default_epe_quality0 = self.get_parameter('~epe_quality0').value or 1000000
+        self.default_epe_quality1 = self.get_parameter('~epe_quality1').value or 4.0
+        self.default_epe_quality2 = self.get_parameter('~epe_quality2').value or 0.1
+        self.default_epe_quality4 = self.get_parameter('~epe_quality4').value or 0.02
+        self.default_epe_quality5 = self.get_parameter('~epe_quality5').value or 4.0
+        self.default_epe_quality9 = self.get_parameter('~epe_quality9').value or 3.0
+
         self.using_receiver_epe = False
 
         self.lon_std_dev = float("nan")
@@ -71,61 +70,61 @@ class RosNMEADriver(object):
         each entry containing a tuple consisting of a default estimated
         position error, a NavSatStatus value, and a NavSatFix covariance value."""
         self.gps_qualities = {
-          # Unknown
-          -1: [
-              self.default_epe_quality0,
-              NavSatStatus.STATUS_NO_FIX,
-              NavSatFix.COVARIANCE_TYPE_UNKNOWN
-              ],
-          # Invalid
-          0: [
-              self.default_epe_quality0,
-              NavSatStatus.STATUS_NO_FIX,
-              NavSatFix.COVARIANCE_TYPE_UNKNOWN
-              ],
-          # SPS
-          1: [
-              self.default_epe_quality1,
-              NavSatStatus.STATUS_FIX,
-              NavSatFix.COVARIANCE_TYPE_APPROXIMATED
-              ],
-          # DGPS
-          2: [
-              self.default_epe_quality2,
-              NavSatStatus.STATUS_SBAS_FIX,
-              NavSatFix.COVARIANCE_TYPE_APPROXIMATED
-              ],
-          # RTK Fix
-          4: [
-              self.default_epe_quality4,
-              NavSatStatus.STATUS_GBAS_FIX,
-              NavSatFix.COVARIANCE_TYPE_APPROXIMATED
-              ],
-          # RTK Float
-          5: [
-              self.default_epe_quality5,
-              NavSatStatus.STATUS_GBAS_FIX,
-              NavSatFix.COVARIANCE_TYPE_APPROXIMATED
-              ],
-          # WAAS
-          9: [
-              self.default_epe_quality9,
-              NavSatStatus.STATUS_GBAS_FIX,
-              NavSatFix.COVARIANCE_TYPE_APPROXIMATED
-              ]
-          }
+            # Unknown
+            -1: [
+                self.default_epe_quality0,
+                NavSatStatus.STATUS_NO_FIX,
+                NavSatFix.COVARIANCE_TYPE_UNKNOWN
+            ],
+            # Invalid
+            0: [
+                self.default_epe_quality0,
+                NavSatStatus.STATUS_NO_FIX,
+                NavSatFix.COVARIANCE_TYPE_UNKNOWN
+            ],
+            # SPS
+            1: [
+                self.default_epe_quality1,
+                NavSatStatus.STATUS_FIX,
+                NavSatFix.COVARIANCE_TYPE_APPROXIMATED
+            ],
+            # DGPS
+            2: [
+                self.default_epe_quality2,
+                NavSatStatus.STATUS_SBAS_FIX,
+                NavSatFix.COVARIANCE_TYPE_APPROXIMATED
+            ],
+            # RTK Fix
+            4: [
+                self.default_epe_quality4,
+                NavSatStatus.STATUS_GBAS_FIX,
+                NavSatFix.COVARIANCE_TYPE_APPROXIMATED
+            ],
+            # RTK Float
+            5: [
+                self.default_epe_quality5,
+                NavSatStatus.STATUS_GBAS_FIX,
+                NavSatFix.COVARIANCE_TYPE_APPROXIMATED
+            ],
+            # WAAS
+            9: [
+                self.default_epe_quality9,
+                NavSatStatus.STATUS_GBAS_FIX,
+                NavSatFix.COVARIANCE_TYPE_APPROXIMATED
+            ]
+        }
 
     # Returns True if we successfully did something with the passed in
     # nmea_string
     def add_sentence(self, nmea_string, frame_id, timestamp=None):
         if not check_nmea_checksum(nmea_string):
-            rospy.logwarn("Received a sentence with an invalid checksum. " +
+            self.get_logger().warn("Received a sentence with an invalid checksum. " +
                           "Sentence was: %s" % repr(nmea_string))
             return False
 
-        parsed_sentence = libnmea_navsat_driver.parser.parse_nmea_sentence(nmea_string)
+        parsed_sentence = parser.parse_nmea_sentence(nmea_string)
         if not parsed_sentence:
-            rospy.logdebug("Failed to parse NMEA sentence. Sentence was: %s" % nmea_string)
+            self.get_logger().debug("Failed to parse NMEA sentence. Sentence was: %s" % nmea_string)
             return False
 
         if timestamp:
@@ -150,7 +149,7 @@ class RosNMEADriver(object):
             data = parsed_sentence['GGA']
             fix_type = data['fix_type']
             if not (fix_type in self.gps_qualities):
-              fix_type = -1
+                fix_type = -1
             gps_qual = self.gps_qualities[fix_type]
             default_epe = gps_qual[0];
             current_fix.status.status = gps_qual[1]
@@ -249,9 +248,9 @@ class RosNMEADriver(object):
                 current_vel.header.stamp = current_time
                 current_vel.header.frame_id = frame_id
                 current_vel.twist.linear.x = data['speed'] * \
-                    math.sin(data['true_course'])
+                                             math.sin(data['true_course'])
                 current_vel.twist.linear.y = data['speed'] * \
-                    math.cos(data['true_course'])
+                                             math.cos(data['true_course'])
                 self.vel_pub.publish(current_vel)
         elif 'GST' in parsed_sentence:
             data = parsed_sentence['GST']
@@ -267,7 +266,7 @@ class RosNMEADriver(object):
                 current_heading = QuaternionStamped()
                 current_heading.header.stamp = current_time
                 current_heading.header.frame_id = frame_id
-                q = quaternion_from_euler(0, 0, math.radians(data['heading']))
+                q = euler2quat(0, 0, math.radians(data['heading']))
                 current_heading.quaternion.x = q[0]
                 current_heading.quaternion.y = q[1]
                 current_heading.quaternion.z = q[2]
@@ -278,14 +277,15 @@ class RosNMEADriver(object):
 
     """Helper method for getting the frame_id with the correct TF prefix"""
 
-    @staticmethod
-    def get_frame_id():
-        frame_id = rospy.get_param('~frame_id', 'gps')
+
+    def get_frame_id(self):
+        frame_id = self.get_paramater('~frame_id') or 'gps'
         """Add the TF prefix"""
         prefix = ""
-        prefix_param = rospy.search_param('tf_prefix')
+        prefix_param = self.get_parameter('tf_prefix')
         if prefix_param:
-            prefix = rospy.get_param(prefix_param)
+            prefix = self.get_parameter(prefix_param)
             return "%s/%s" % (prefix, frame_id)
         else:
             return frame_id
+

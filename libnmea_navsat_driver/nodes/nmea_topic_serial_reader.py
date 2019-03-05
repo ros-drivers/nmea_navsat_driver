@@ -34,33 +34,35 @@
 
 import serial
 
-import rospy
+import rclpy
 
 from nmea_msgs.msg import Sentence
-from libnmea_navsat_driver.driver import RosNMEADriver
+from libnmea_navsat_driver.driver import Ros2NMEADriver
 
-if __name__ == '__main__':
-    rospy.init_node('nmea_topic_serial_reader')
+def main(args=None):
+    rclpy.init(args=args)
 
-    nmea_pub = rospy.Publisher("nmea_sentence", Sentence, queue_size=1)
+    node = rclpy.create_node('nmea_topic_serial_reader')
 
-    serial_port = rospy.get_param('~port','/dev/ttyUSB0')
-    serial_baud = rospy.get_param('~baud',4800)
+    nmea_pub = node.create_publisher(Sentence, "nmea_sentence")
+
+    serial_port = node.get_parameter('~port').value or '/dev/ttyUSB0'
+    serial_baud = node.get_parameter('~baud').value or 4800
 
     # Get the frame_id
-    frame_id = RosNMEADriver.get_frame_id()
+    frame_id = Ros2NMEADriver.get_frame_id()
 
     try:
         GPS = serial.Serial(port=serial_port, baudrate=serial_baud, timeout=2)
-        while not rospy.is_shutdown():
+        while not rclpy.is_shutdown():
             data = GPS.readline().strip()
 
             sentence = Sentence()
-            sentence.header.stamp = rospy.get_rostime()
-	    sentence.header.frame_id = frame_id
+            sentence.header.stamp = rclpy.get_rostime()
+	        sentence.header.frame_id = frame_id
             sentence.sentence = data
 
             nmea_pub.publish(sentence)
 
-    except rospy.ROSInterruptException:
+    except rclpy.ROSInterruptException:
         GPS.close() #Close GPS serial port

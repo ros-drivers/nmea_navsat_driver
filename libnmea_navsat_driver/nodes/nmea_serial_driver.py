@@ -34,32 +34,37 @@
 
 import serial
 
-import rospy
+import rclpy
 
-import libnmea_navsat_driver.driver
+from libnmea_navsat_driver.driver import Ros2NMEADriver
 
-import sys
 
-if __name__ == '__main__':
-    rospy.init_node('nmea_serial_driver')
+def main(args=None):
+    rclpy.init(args=args)
+    node = rclpy.create_node('nmea_serial_driver')
 
-    serial_port = rospy.get_param('~port','/dev/ttyUSB0')
-    serial_baud = rospy.get_param('~baud',4800)
-    frame_id = libnmea_navsat_driver.driver.RosNMEADriver.get_frame_id()
+    serial_port = node.get_parameter('~port').value or '/dev/ttyUSB0'
+    serial_baud = node.get_parameter('~baud').value or 4800
+
+    driver = Ros2NMEADriver()
+    frame_id = driver.get_frame_id()
 
     try:
         GPS = serial.Serial(port=serial_port, baudrate=serial_baud, timeout=2)
-
         try:
-            driver = libnmea_navsat_driver.driver.RosNMEADriver()
-            while not rospy.is_shutdown():
+            while not rclpy.is_shutdown():
                 data = GPS.readline().strip()
                 try:
                     driver.add_sentence(data, frame_id)
                 except ValueError as e:
-                    rospy.logwarn("Value error, likely due to missing fields in the NMEA message. Error was: %s. Please report this issue at github.com/ros-drivers/nmea_navsat_driver, including a bag file with the NMEA sentences that caused it." % e)
+                    rclpy.get_logger().warn(
+                        "Value error, likely due to missing fields in the NMEA message. Error was: %s. Please report this issue at github.com/ros-drivers/nmea_navsat_driver, including a bag file with the NMEA sentences that caused it." % e)
 
-        except (rospy.ROSInterruptException, serial.serialutil.SerialException):
-            GPS.close() #Close GPS serial port
+        except (rclpy.ROSInterruptException, serial.serialutil.SerialException):
+            GPS.close()  # Close GPS serial port
     except serial.SerialException as ex:
-        rospy.logfatal("Could not open serial port: I/O error({0}): {1}".format(ex.errno, ex.strerror))
+        rclpy.get_logger().fatal("Could not open serial port: I/O error({0}): {1}".format(ex.errno, ex.strerror))
+
+
+if __name__ == '__main__':
+    main()
