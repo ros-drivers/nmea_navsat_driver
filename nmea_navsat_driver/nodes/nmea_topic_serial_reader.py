@@ -36,29 +36,30 @@ import serial
 
 import rclpy
 
+import time
 from nmea_msgs.msg import Sentence
-from libnmea_navsat_driver.driver import Ros2NMEADriver
+from nmea_navsat_driver.driver import Ros2NMEADriver
 
 def main(args=None):
     rclpy.init(args=args)
 
-    node = rclpy.create_node('nmea_topic_serial_reader')
+    driver = Ros2NMEADriver()
 
-    nmea_pub = node.create_publisher(Sentence, "nmea_sentence")
+    nmea_pub = driver.create_publisher(Sentence, "nmea_sentence")
 
-    serial_port = node.get_parameter('~port').value or '/dev/ttyUSB0'
-    serial_baud = node.get_parameter('~baud').value or 4800
+    serial_port = driver.get_parameter('~port').value or '/dev/tty.usbserial'
+    serial_baud = driver.get_parameter('~baud').value or 4800
 
     # Get the frame_id
-    frame_id = Ros2NMEADriver.get_frame_id()
+    frame_id = driver.get_frame_id()
 
     try:
         GPS = serial.Serial(port=serial_port, baudrate=serial_baud, timeout=2)
-        while not rclpy.is_shutdown():
+        while rclpy.ok():
             data = GPS.readline().strip()
 
             sentence = Sentence()
-            sentence.header.stamp = rclpy.get_rostime()
+            sentence.header.stamp = rclpy.time.Time(seconds=time.time()).to_msg()
 	        sentence.header.frame_id = frame_id
             sentence.sentence = data
 

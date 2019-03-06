@@ -37,27 +37,26 @@ import sys
 
 import rclpy
 
-from libnmea_navsat_driver.driver import Ros2NMEADriver
+from nmea_navsat_driver.driver import Ros2NMEADriver
 
 def main(args=None):
     rclpy.init(args=args)
-    node = rclpy.create_node('nmea_socket_driver')
+    driver = Ros2NMEADriver()
 
     try:
-        local_ip = node.get_parameter('~ip').value or '0.0.0.0'
-        local_port = node.get_parameter('~port').value or 10110
-        buffer_size = node.get_parameter('~buffer_size').value or 4096
-        timeout = node.get_parameter('~timeout_sec').value or 2
+        local_ip = driver.get_parameter('~ip').value or '0.0.0.0'
+        local_port = driver.get_parameter('~port').value or 10110
+        buffer_size = driver.get_parameter('~buffer_size').value or 4096
+        timeout = driver.get_parameter('~timeout_sec').value or 2
     except KeyError as e:
         rclpy.logerr("Parameter %s not found" % e)
         sys.exit(1)
 
-    driver = Ros2NMEADriver()
 
     frame_id = driver.get_frame_id()
 
     # Connection-loop: connect and keep receiving. If receiving fails, reconnect
-    while not rclpy.is_shutdown():
+    while rclpy.ok():
         try:
             # Create a socket
             socket_ = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -72,7 +71,7 @@ def main(args=None):
             sys.exit(1)
 
         # recv-loop: When we're connected, keep receiving stuff until that fails
-        while not rclpy.is_shutdown():
+        while rclpy.ok():
             try:
                 data, remote_address = socket_.recvfrom(buffer_size)
 

@@ -33,20 +33,22 @@
 import math
 
 import rclpy
+
 from rclpy.node import Node
 from sensor_msgs.msg import NavSatFix, NavSatStatus, TimeReference
 from geometry_msgs.msg import TwistStamped, QuaternionStamped
 from transforms3d.euler import euler2quat
-from libnmea_navsat_driver.checksum_utils import check_nmea_checksum
-from libnmea_navsat_driver import parser
-
+from nmea_navsat_driver.checksum_utils import check_nmea_checksum
+from nmea_navsat_driver import parser
 
 class Ros2NMEADriver(Node):
     def __init__(self):
-        self.fix_pub = rclpy.create_publisher(NavSatFix, 'fix')
-        self.vel_pub = rclpy.create_publisher(TwistStamped, 'vel')
-        self.heading_pub = rclpy.create_publisher(QuaternionStamped, 'heading')
-        self.time_ref_pub = rclpy.create_publisher(TimeReference, 'time_reference')
+        super().__init__('Ros2NMEADriver')
+
+        self.fix_pub = self.create_publisher(NavSatFix, 'fix')
+        self.vel_pub = self.create_publisher(TwistStamped, 'vel')
+        self.heading_pub = self.create_publisher(QuaternionStamped, 'heading')
+        self.time_ref_pub = self.create_publisher(TimeReference, 'time_reference')
 
         self.time_ref_source = self.get_parameter('~time_ref_source').value
         self.use_RMC = self.get_parameter('~useRMC').value
@@ -119,7 +121,7 @@ class Ros2NMEADriver(Node):
     def add_sentence(self, nmea_string, frame_id, timestamp=None):
         if not check_nmea_checksum(nmea_string):
             self.get_logger().warn("Received a sentence with an invalid checksum. " +
-                          "Sentence was: %s" % repr(nmea_string))
+                                   "Sentence was: %s" % nmea_string)
             return False
 
         parsed_sentence = parser.parse_nmea_sentence(nmea_string)
@@ -130,12 +132,13 @@ class Ros2NMEADriver(Node):
         if timestamp:
             current_time = timestamp
         else:
-            current_time = rospy.get_rostime()
+            current_time = rclpy.time.Time()
+
         current_fix = NavSatFix()
-        current_fix.header.stamp = current_time
+        #current_fix.header.stamp = current_time
         current_fix.header.frame_id = frame_id
         current_time_ref = TimeReference()
-        current_time_ref.header.stamp = current_time
+        #current_time_ref.header.stamp = current_time
         current_time_ref.header.frame_id = frame_id
         if self.time_ref_source:
             current_time_ref.source = self.time_ref_source
@@ -151,11 +154,10 @@ class Ros2NMEADriver(Node):
             if not (fix_type in self.gps_qualities):
                 fix_type = -1
             gps_qual = self.gps_qualities[fix_type]
-            default_epe = gps_qual[0];
+            default_epe = gps_qual[0]
             current_fix.status.status = gps_qual[1]
-            current_fix.position_covariance_type = gps_qual[2];
-
-            if gps_qual > 0:
+            current_fix.position_covariance_type = gps_qual[2]
+            if current_fix.status.status > 0:
                 self.valid_fix = True
             else:
                 self.valid_fix = False
@@ -192,7 +194,7 @@ class Ros2NMEADriver(Node):
             self.fix_pub.publish(current_fix)
 
             if not math.isnan(data['utc_time']):
-                current_time_ref.time_ref = rospy.Time.from_sec(data['utc_time'])
+                current_time_ref.time_ref = rclpy.time.Time(seconds=data['utc_time']).to_msg()
                 self.last_valid_fix_time = current_time_ref
                 self.time_ref_pub.publish(current_time_ref)
 
@@ -239,7 +241,7 @@ class Ros2NMEADriver(Node):
                 self.fix_pub.publish(current_fix)
 
                 if not math.isnan(data['utc_time']):
-                    current_time_ref.time_ref = rospy.Time.from_sec(data['utc_time'])
+                    current_time_ref.time_ref = rclpy.time.Time(seconds=data['utc_time']).to_msg()
                     self.time_ref_pub.publish(current_time_ref)
 
             # Publish velocity from RMC regardless, since GGA doesn't provide it.
@@ -277,9 +279,8 @@ class Ros2NMEADriver(Node):
 
     """Helper method for getting the frame_id with the correct TF prefix"""
 
-
     def get_frame_id(self):
-        frame_id = self.get_paramater('~frame_id') or 'gps'
+        frame_id = self.get_parameter('~frame_id') or 'gps'
         """Add the TF prefix"""
         prefix = ""
         prefix_param = self.get_parameter('tf_prefix')
@@ -288,4 +289,3 @@ class Ros2NMEADriver(Node):
             return "%s/%s" % (prefix, frame_id)
         else:
             return frame_id
-

@@ -36,7 +36,7 @@ import rclpy
 
 from nmea_msgs.msg import Sentence
 
-from libnmea_navsat_driver.driver import Ros2NMEADriver
+from nmea_navsat_driver.driver import Ros2NMEADriver
 
 def nmea_sentence_callback(nmea_sentence, driver):
     try:
@@ -47,12 +47,10 @@ def nmea_sentence_callback(nmea_sentence, driver):
 def main(args=None):
     rclpy.init(args=args)
 
-    node = rclpy.create_node('nmea_topic_driver')
-
     driver = Ros2NMEADriver()
     driver.get_frame_id()
 
-    node.create_subscription(
+    driver.create_subscription(
         Sentence, 'nmea_sentence', nmea_sentence_callback, driver)
 
     rclpy.spin(node)

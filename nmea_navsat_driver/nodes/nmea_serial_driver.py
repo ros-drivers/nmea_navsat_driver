@@ -36,34 +36,37 @@ import serial
 
 import rclpy
 
-from libnmea_navsat_driver.driver import Ros2NMEADriver
+from nmea_navsat_driver.driver import Ros2NMEADriver
 
 
 def main(args=None):
     rclpy.init(args=args)
-    node = rclpy.create_node('nmea_serial_driver')
-
-    serial_port = node.get_parameter('~port').value or '/dev/ttyUSB0'
-    serial_baud = node.get_parameter('~baud').value or 4800
 
     driver = Ros2NMEADriver()
     frame_id = driver.get_frame_id()
 
+    serial_port = driver.get_parameter('~port').value or '/dev/tty.usbserial'
+    serial_baud = driver.get_parameter('~baud').value or 4800
+
+
     try:
         GPS = serial.Serial(port=serial_port, baudrate=serial_baud, timeout=2)
         try:
-            while not rclpy.is_shutdown():
+            while rclpy.ok():
                 data = GPS.readline().strip()
                 try:
+                    if isinstance(data, bytes):
+                        data = data.decode("utf-8")
                     driver.add_sentence(data, frame_id)
                 except ValueError as e:
-                    rclpy.get_logger().warn(
+                    driver.get_logger().warn(
                         "Value error, likely due to missing fields in the NMEA message. Error was: %s. Please report this issue at github.com/ros-drivers/nmea_navsat_driver, including a bag file with the NMEA sentences that caused it." % e)
 
-        except (rclpy.ROSInterruptException, serial.serialutil.SerialException):
+        except Exception as e:
+            print(e)
             GPS.close()  # Close GPS serial port
     except serial.SerialException as ex:
-        rclpy.get_logger().fatal("Could not open serial port: I/O error({0}): {1}".format(ex.errno, ex.strerror))
+        driver.get_logger().fatal("Could not open serial port: I/O error({0}): {1}".format(ex.errno, ex.strerror))
 
 
 if __name__ == '__main__':
