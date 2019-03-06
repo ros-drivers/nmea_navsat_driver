@@ -41,6 +41,7 @@ from transforms3d.euler import euler2quat
 from nmea_navsat_driver.checksum_utils import check_nmea_checksum
 from nmea_navsat_driver import parser
 
+import time
 class Ros2NMEADriver(Node):
     def __init__(self):
         super().__init__('Ros2NMEADriver')
@@ -132,13 +133,13 @@ class Ros2NMEADriver(Node):
         if timestamp:
             current_time = timestamp
         else:
-            current_time = rclpy.time.Time()
+            current_time = rclpy.time.Time(seconds=time.time()).to_msg()
 
         current_fix = NavSatFix()
-        #current_fix.header.stamp = current_time
+        current_fix.header.stamp = current_time
         current_fix.header.frame_id = frame_id
         current_time_ref = TimeReference()
-        #current_time_ref.header.stamp = current_time
+        current_time_ref.header.stamp = current_time
         current_time_ref.header.frame_id = frame_id
         if self.time_ref_source:
             current_time_ref.source = self.time_ref_source
