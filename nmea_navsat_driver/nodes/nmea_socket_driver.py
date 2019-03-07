@@ -88,7 +88,7 @@ def main(args=None):
                                     "including a bag file with the NMEA sentences that caused it." % e)
 
             except socket.error as exc:
-                rclpy.get_logger().err("Caught exception socket.error during recvfrom: %s" % exc)
+                driver.get_logger().error("Caught exception socket.error during recvfrom: %s" % exc)
                 socket_.close()
                 # This will break out of the recv-loop so we start another iteration of the connection-loop
                 break

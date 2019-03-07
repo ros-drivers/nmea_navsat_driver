@@ -10,4 +10,4 @@ log
 install
 .idea
 dist
-libnmea_navsat_driver.egg-info/
+nmea_navsat_driver.egg-info/

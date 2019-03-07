@@ -164,7 +164,6 @@ class Ros2NMEADriver(Node):
                 self.valid_fix = False
 
             current_fix.status.service = NavSatStatus.SERVICE_GPS
-
             latitude = data['latitude']
             if data['latitude_direction'] == 'S':
                 latitude = -latitude
