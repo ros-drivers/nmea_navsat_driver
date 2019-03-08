@@ -47,8 +47,8 @@ def main(args=None):
 
     nmea_pub = driver.create_publisher(Sentence, "nmea_sentence")
 
-    serial_port = driver.get_parameter('~port').value or '/dev/tty.usbserial'
-    serial_baud = driver.get_parameter('~baud').value or 4800
+    serial_port = driver.get_parameter('port').value or '/dev/ttyUSB0'
+    serial_baud = driver.get_parameter('baud').value or 4800
 
     # Get the frame_id
     frame_id = driver.get_frame_id()

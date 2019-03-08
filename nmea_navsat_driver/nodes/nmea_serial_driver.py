@@ -45,8 +45,8 @@ def main(args=None):
     driver = Ros2NMEADriver()
     frame_id = driver.get_frame_id()
 
-    serial_port = driver.get_parameter('~port').value or '/dev/tty.usbserial'
-    serial_baud = driver.get_parameter('~baud').value or 4800
+    serial_port = driver.get_parameter('port').value or '/dev/ttyUSB0'
+    serial_baud = driver.get_parameter('baud').value or 4800
 
 
     try:

@@ -44,10 +44,10 @@ def main(args=None):
     driver = Ros2NMEADriver()
 
     try:
-        local_ip = driver.get_parameter('~ip').value or '0.0.0.0'
-        local_port = driver.get_parameter('~port').value or 10110
-        buffer_size = driver.get_parameter('~buffer_size').value or 4096
-        timeout = driver.get_parameter('~timeout_sec').value or 2
+        local_ip = driver.get_parameter('ip').value or '0.0.0.0'
+        local_port = driver.get_parameter('port').value or 10110
+        buffer_size = driver.get_parameter('buffer_size').value or 4096
+        timeout = driver.get_parameter('timeout_sec').value or 2
     except KeyError as e:
         rclpy.logerr("Parameter %s not found" % e)
         sys.exit(1)

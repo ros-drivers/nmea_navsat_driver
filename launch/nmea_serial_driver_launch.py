@@ -32,8 +32,8 @@ def main(argv=sys.argv[1:]):
     """Main."""
     ld = LaunchDescription([
         launch_ros.actions.Node(
-            package='nmea_navsat_driver', node_executable='nmea_serial_driver_node', output='screen',
-            parameters="config.yaml")
+            package='nmea_navsat_driver', node_executable='nmea_serial_driver', output='screen',
+            parameters=["config.yaml"])
     ])
 
     print('Starting introspection of launch description...')
