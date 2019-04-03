@@ -5,6 +5,7 @@ setup(
     version='0.5.1',
     packages=find_packages(),
     py_modules=[],
+    zip_safe=True,
     install_requires=['setuptools',
                       'pyserial',
                       'transforms3d',

@@ -49,7 +49,7 @@ def main(args=None):
         buffer_size = driver.get_parameter('buffer_size').value or 4096
         timeout = driver.get_parameter('timeout_sec').value or 2
     except KeyError as e:
-        rclpy.logerr("Parameter %s not found" % e)
+        driver.get_logger().err("Parameter %s not found" % e)
         sys.exit(1)
 
 
@@ -67,7 +67,7 @@ def main(args=None):
             # Set timeout
             socket_.settimeout(timeout)
         except socket.error as exc:
-            rclpy.get_logger().err("Caught exception socket.error when setting up socket: %s" % exc)
+            rclpy.get_logger().error("Caught exception socket.error when setting up socket: %s" % exc)
             sys.exit(1)
 
         # recv-loop: When we're connected, keep receiving stuff until that fails

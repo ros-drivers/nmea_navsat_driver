@@ -37,11 +37,10 @@ import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import NavSatFix, NavSatStatus, TimeReference
 from geometry_msgs.msg import TwistStamped, QuaternionStamped
-from transforms3d.euler import euler2quat
+from transforms3d.euler import euler2quat as quaternion_from_euler
 from nmea_navsat_driver.checksum_utils import check_nmea_checksum
 from nmea_navsat_driver import parser
 
-import time
 class Ros2NMEADriver(Node):
     def __init__(self):
         super().__init__('nmea_navsat_driver')
@@ -133,7 +132,7 @@ class Ros2NMEADriver(Node):
         if timestamp:
             current_time = timestamp
         else:
-            current_time = rclpy.time.Time(seconds=time.time()).to_msg()
+            current_time = self.get_clock().now().to_msg()
 
         current_fix = NavSatFix()
         current_fix.header.stamp = current_time
@@ -268,7 +267,7 @@ class Ros2NMEADriver(Node):
                 current_heading = QuaternionStamped()
                 current_heading.header.stamp = current_time
                 current_heading.header.frame_id = frame_id
-                q = euler2quat(0, 0, math.radians(data['heading']))
+                q = quaternion_from_euler(0, 0, math.radians(data['heading']))
                 current_heading.quaternion.x = q[0]
                 current_heading.quaternion.y = q[1]
                 current_heading.quaternion.z = q[2]

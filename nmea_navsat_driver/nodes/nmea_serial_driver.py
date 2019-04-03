@@ -63,7 +63,7 @@ def main(args=None):
                         "Value error, likely due to missing fields in the NMEA message. Error was: %s. Please report this issue at github.com/ros-drivers/nmea_navsat_driver, including a bag file with the NMEA sentences that caused it." % e)
 
         except Exception as e:
-            print(e)
+            driver.get_logger().error("Ros error: {0}".format(e))
             GPS.close()  # Close GPS serial port
     except serial.SerialException as ex:
         driver.get_logger().fatal("Could not open serial port: I/O error({0}): {1}".format(ex.errno, ex.strerror))

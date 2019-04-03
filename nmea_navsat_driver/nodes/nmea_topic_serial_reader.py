@@ -40,6 +40,7 @@ import time
 from nmea_msgs.msg import Sentence
 from nmea_navsat_driver.driver import Ros2NMEADriver
 
+
 def main(args=None):
     rclpy.init(args=args)
 
@@ -59,11 +60,10 @@ def main(args=None):
             data = GPS.readline().strip()
 
             sentence = Sentence()
-            sentence.header.stamp = rclpy.time.Time(seconds=time.time()).to_msg()
-	        sentence.header.frame_id = frame_id
+            sentence.header.stamp = driver.get_clock().now().to_msg()
+            sentence.header.frame_id = frame_id
             sentence.sentence = data
-
             nmea_pub.publish(sentence)
 
     except rclpy.ROSInterruptException:
-        GPS.close() #Close GPS serial port
+        GPS.close()  # Close GPS serial port
