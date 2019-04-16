@@ -37,7 +37,7 @@ import serial
 import rclpy
 
 from nmea_msgs.msg import Sentence
-from src.libnmea_navsat_driver.driver import Ros2NMEADriver
+from libnmea_navsat_driver.driver import Ros2NMEADriver
 
 
 def main(args=None):

@@ -1,9 +1,11 @@
-from setuptools import setup, find_packages
+from setuptools import setup
 
 setup(
-    name='nmea_navsat_driver',
+    name='libnmea_navsat_driver',
     version='0.5.1',
-    packages=find_packages(),
+    packages=["scripts", "libnmea_navsat_driver"],
+    package_dir={'': 'src',
+                 "scripts": "scripts"},
     py_modules=[],
     zip_safe=True,
     install_requires=['setuptools',
@@ -21,5 +23,5 @@ setup(
                             'nmea_socket_driver = scripts.nmea_socket_driver:main',
                             'nmea_topic_driver = scripts.nmea_topic_driver:main',
                             'nmea_topic_serial_driver = scripts.nmea_topic_serial_driver:main'],
-    },
+    }
 )

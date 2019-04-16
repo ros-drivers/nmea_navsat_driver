@@ -36,7 +36,7 @@ import serial
 
 import rclpy
 
-from src.libnmea_navsat_driver.driver import Ros2NMEADriver
+from libnmea_navsat_driver.driver import Ros2NMEADriver
 
 
 def main(args=None):
