@@ -36,7 +36,7 @@ import rclpy
 
 from nmea_msgs.msg import Sentence
 
-from nmea_navsat_driver.driver import Ros2NMEADriver
+from src.libnmea_navsat_driver.driver import Ros2NMEADriver
 
 
 def nmea_sentence_callback(nmea_sentence, driver):
