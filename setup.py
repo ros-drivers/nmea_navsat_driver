@@ -17,9 +17,9 @@ setup(
     description='Package to parse NMEA strings and publish a very simple GPS message.',
     license='BSD',
     entry_points={
-        'console_scripts': ['nmea_serial_driver = nmea_navsat_driver.nodes.nmea_serial_driver:main',
-                            'nmea_socket_driver = nmea_navsat_driver.nodes.nmea_socket_driver:main',
-                            'nmea_topic_driver = nmea_navsat_driver.nodes.nmea_topic_driver:main',
-                            'nmea_topic_serial_driver = nmea_navsat_driver.nodes.nmea_topic_serial_driver:main'],
+        'console_scripts': ['nmea_serial_driver = scripts.nmea_serial_driver:main',
+                            'nmea_socket_driver = scripts.nmea_socket_driver:main',
+                            'nmea_topic_driver = scripts.nmea_topic_driver:main',
+                            'nmea_topic_serial_driver = scripts.nmea_topic_serial_driver:main'],
     },
 )
