@@ -48,7 +48,6 @@ def main(args=None):
     serial_port = driver.get_parameter('port').value or '/dev/ttyUSB0'
     serial_baud = driver.get_parameter('baud').value or 4800
 
-
     try:
         GPS = serial.Serial(port=serial_port, baudrate=serial_baud, timeout=2)
         try:

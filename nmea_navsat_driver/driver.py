@@ -41,6 +41,7 @@ from transforms3d.euler import euler2quat as quaternion_from_euler
 from nmea_navsat_driver.checksum_utils import check_nmea_checksum
 from nmea_navsat_driver import parser
 
+
 class Ros2NMEADriver(Node):
     def __init__(self):
         super().__init__('nmea_navsat_driver')

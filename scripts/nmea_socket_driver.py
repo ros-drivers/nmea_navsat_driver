@@ -39,6 +39,7 @@ import rclpy
 
 from nmea_navsat_driver.driver import Ros2NMEADriver
 
+
 def main(args=None):
     rclpy.init(args=args)
     driver = Ros2NMEADriver()
@@ -51,7 +52,6 @@ def main(args=None):
     except KeyError as e:
         driver.get_logger().err("Parameter %s not found" % e)
         sys.exit(1)
-
 
     frame_id = driver.get_frame_id()
 
@@ -84,8 +84,8 @@ def main(args=None):
                         driver.add_sentence(data, frame_id)
                     except ValueError as e:
                         rclpy.get_logger().warn("Value error, likely due to missing fields in the NMEA message. "
-                                    "Error was: %s. Please report this issue at github.com/ros-drivers/nmea_navsat_driver, "
-                                    "including a bag file with the NMEA sentences that caused it." % e)
+                                                "Error was: %s. Please report this issue at github.com/ros-drivers/nmea_navsat_driver, "
+                                                "including a bag file with the NMEA sentences that caused it." % e)
 
             except socket.error as exc:
                 driver.get_logger().error("Caught exception socket.error during recvfrom: %s" % exc)
@@ -94,6 +94,7 @@ def main(args=None):
                 break
 
         socket_.close()  # Close socket
+
 
 if __name__ == '__main__':
     main()
