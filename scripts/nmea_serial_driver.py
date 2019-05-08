@@ -34,33 +34,39 @@
 
 import serial
 
-import rospy
+import rclpy
 
-from nmea_msgs.msg import Sentence
-from libnmea_navsat_driver.driver import RosNMEADriver
+from libnmea_navsat_driver.driver import Ros2NMEADriver
 
-if __name__ == '__main__':
-    rospy.init_node('nmea_topic_serial_reader')
 
-    nmea_pub = rospy.Publisher("nmea_sentence", Sentence, queue_size=1)
+def main(args=None):
+    rclpy.init(args=args)
 
-    serial_port = rospy.get_param('~port','/dev/ttyUSB0')
-    serial_baud = rospy.get_param('~baud',4800)
+    driver = Ros2NMEADriver()
+    frame_id = driver.get_frame_id()
 
-    # Get the frame_id
-    frame_id = RosNMEADriver.get_frame_id()
+    serial_port = driver.get_parameter('port').value or '/dev/ttyUSB0'
+    serial_baud = driver.get_parameter('baud').value or 4800
 
     try:
         GPS = serial.Serial(port=serial_port, baudrate=serial_baud, timeout=2)
-        while not rospy.is_shutdown():
-            data = GPS.readline().strip()
+        try:
+            while rclpy.ok():
+                data = GPS.readline().strip()
+                try:
+                    if isinstance(data, bytes):
+                        data = data.decode("utf-8")
+                    driver.add_sentence(data, frame_id)
+                except ValueError as e:
+                    driver.get_logger().warn(
+                        "Value error, likely due to missing fields in the NMEA message. Error was: %s. Please report this issue at github.com/ros-drivers/nmea_navsat_driver, including a bag file with the NMEA sentences that caused it." % e)
 
-            sentence = Sentence()
-            sentence.header.stamp = rospy.get_rostime()
-	    sentence.header.frame_id = frame_id
-            sentence.sentence = data
+        except Exception as e:
+            driver.get_logger().error("Ros error: {0}".format(e))
+            GPS.close()  # Close GPS serial port
+    except serial.SerialException as ex:
+        driver.get_logger().fatal("Could not open serial port: I/O error({0}): {1}".format(ex.errno, ex.strerror))
 
-            nmea_pub.publish(sentence)
 
-    except rospy.ROSInterruptException:
-        GPS.close() #Close GPS serial port
+if __name__ == '__main__':
+    main()

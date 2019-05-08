@@ -35,6 +35,7 @@ import time
 import calendar
 import math
 import logging
+
 logger = logging.getLogger('rosout')
 
 
@@ -95,6 +96,7 @@ def convert_knots_to_mps(knots):
 def convert_deg_to_rads(degs):
     return math.radians(safe_float(degs))
 
+
 """Format for this dictionary is a sentence identifier (e.g. "GGA") as the key, with a
 list of tuples where each tuple is a field name, conversion function and index
 into the split sentence"""
@@ -110,7 +112,7 @@ parse_maps = {
         ("hdop", safe_float, 8),
         ("num_satellites", safe_int, 7),
         ("utc_time", convert_time, 1),
-        ],
+    ],
     "RMC": [
         ("utc_time", convert_time, 1),
         ("fix_valid", convert_status_flag, 2),
@@ -120,7 +122,7 @@ parse_maps = {
         ("longitude_direction", str, 6),
         ("speed", convert_knots_to_mps, 7),
         ("true_course", convert_deg_to_rads, 8),
-        ],
+    ],
     "GST": [
         ("utc_time", convert_time, 1),
         ("ranges_std_dev", safe_float, 2),
@@ -130,15 +132,15 @@ parse_maps = {
         ("lat_std_dev", safe_float, 6),
         ("lon_std_dev", safe_float, 7),
         ("alt_std_dev", safe_float, 8),
-        ],
+    ],
     "HDT": [
         ("heading", safe_float, 1),
-        ],
-    "VTG":[
-        ("true_course", safe_float,1),
-        ("speed", convert_knots_to_mps,5)
-        ]
-    }
+    ],
+    "VTG": [
+        ("true_course", safe_float, 1),
+        ("speed", convert_knots_to_mps, 5)
+    ]
+}
 
 
 def parse_nmea_sentence(nmea_sentence):

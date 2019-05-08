@@ -34,32 +34,35 @@
 
 import serial
 
-import rospy
+import rclpy
 
-import libnmea_navsat_driver.driver
+from nmea_msgs.msg import Sentence
+from libnmea_navsat_driver.driver import Ros2NMEADriver
 
-import sys
 
-if __name__ == '__main__':
-    rospy.init_node('nmea_serial_driver')
+def main(args=None):
+    rclpy.init(args=args)
 
-    serial_port = rospy.get_param('~port','/dev/ttyUSB0')
-    serial_baud = rospy.get_param('~baud',4800)
-    frame_id = libnmea_navsat_driver.driver.RosNMEADriver.get_frame_id()
+    driver = Ros2NMEADriver()
+
+    nmea_pub = driver.create_publisher(Sentence, "nmea_sentence")
+
+    serial_port = driver.get_parameter('port').value or '/dev/ttyUSB0'
+    serial_baud = driver.get_parameter('baud').value or 4800
+
+    # Get the frame_id
+    frame_id = driver.get_frame_id()
 
     try:
         GPS = serial.Serial(port=serial_port, baudrate=serial_baud, timeout=2)
+        while rclpy.ok():
+            data = GPS.readline().strip()
 
-        try:
-            driver = libnmea_navsat_driver.driver.RosNMEADriver()
-            while not rospy.is_shutdown():
-                data = GPS.readline().strip()
-                try:
-                    driver.add_sentence(data, frame_id)
-                except ValueError as e:
-                    rospy.logwarn("Value error, likely due to missing fields in the NMEA message. Error was: %s. Please report this issue at github.com/ros-drivers/nmea_navsat_driver, including a bag file with the NMEA sentences that caused it." % e)
+            sentence = Sentence()
+            sentence.header.stamp = driver.get_clock().now().to_msg()
+            sentence.header.frame_id = frame_id
+            sentence.sentence = data
+            nmea_pub.publish(sentence)
 
-        except (rospy.ROSInterruptException, serial.serialutil.SerialException):
-            GPS.close() #Close GPS serial port
-    except serial.SerialException as ex:
-        rospy.logfatal("Could not open serial port: I/O error({0}): {1}".format(ex.errno, ex.strerror))
+    except rclpy.ROSInterruptException:
+        GPS.close()  # Close GPS serial port

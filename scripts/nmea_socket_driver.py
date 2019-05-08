@@ -35,28 +35,28 @@
 import socket
 import sys
 
-import rospy
+import rclpy
 
-import libnmea_navsat_driver.driver
+from libnmea_navsat_driver.driver import Ros2NMEADriver
 
-if __name__ == '__main__':
-    rospy.init_node('nmea_socket_driver')
+
+def main(args=None):
+    rclpy.init(args=args)
+    driver = Ros2NMEADriver()
 
     try:
-        local_ip = rospy.get_param('~ip', '0.0.0.0')
-        local_port = rospy.get_param('~port', 10110)
-        buffer_size = rospy.get_param('~buffer_size', 4096)
-        timeout = rospy.get_param('~timeout_sec', 2)
+        local_ip = driver.get_parameter('ip').value or '0.0.0.0'
+        local_port = driver.get_parameter('port').value or 10110
+        buffer_size = driver.get_parameter('buffer_size').value or 4096
+        timeout = driver.get_parameter('timeout_sec').value or 2
     except KeyError as e:
-        rospy.logerr("Parameter %s not found" % e)
+        driver.get_logger().err("Parameter %s not found" % e)
         sys.exit(1)
 
-    frame_id = libnmea_navsat_driver.driver.RosNMEADriver.get_frame_id()
-
-    driver = libnmea_navsat_driver.driver.RosNMEADriver()
+    frame_id = driver.get_frame_id()
 
     # Connection-loop: connect and keep receiving. If receiving fails, reconnect
-    while not rospy.is_shutdown():
+    while rclpy.ok():
         try:
             # Create a socket
             socket_ = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -66,12 +66,12 @@ if __name__ == '__main__':
 
             # Set timeout
             socket_.settimeout(timeout)
-        except socket.error, exc:
-            rospy.logerr("Caught exception socket.error when setting up socket: %s" % exc)
+        except socket.error as exc:
+            rclpy.get_logger().error("Caught exception socket.error when setting up socket: %s" % exc)
             sys.exit(1)
 
         # recv-loop: When we're connected, keep receiving stuff until that fails
-        while not rospy.is_shutdown():
+        while rclpy.ok():
             try:
                 data, remote_address = socket_.recvfrom(buffer_size)
 
@@ -83,14 +83,18 @@ if __name__ == '__main__':
                     try:
                         driver.add_sentence(data, frame_id)
                     except ValueError as e:
-                        rospy.logwarn("Value error, likely due to missing fields in the NMEA message. "
-                                    "Error was: %s. Please report this issue at github.com/ros-drivers/nmea_navsat_driver, "
-                                    "including a bag file with the NMEA sentences that caused it." % e)
+                        rclpy.get_logger().warn("Value error, likely due to missing fields in the NMEA message. "
+                                                "Error was: %s. Please report this issue at github.com/ros-drivers/nmea_navsat_driver, "
+                                                "including a bag file with the NMEA sentences that caused it." % e)
 
-            except socket.error, exc:
-                rospy.logerr("Caught exception socket.error during recvfrom: %s" % exc)
+            except socket.error as exc:
+                driver.get_logger().error("Caught exception socket.error during recvfrom: %s" % exc)
                 socket_.close()
                 # This will break out of the recv-loop so we start another iteration of the connection-loop
                 break
 
         socket_.close()  # Close socket
+
+
+if __name__ == '__main__':
+    main()

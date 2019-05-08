@@ -32,24 +32,35 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-import rospy
+import rclpy
 
 from nmea_msgs.msg import Sentence
 
-import libnmea_navsat_driver.driver
+from libnmea_navsat_driver.driver import Ros2NMEADriver
+
 
 def nmea_sentence_callback(nmea_sentence, driver):
     try:
-        driver.add_sentence(nmea_sentence.sentence, frame_id=nmea_sentence.header.frame_id, timestamp=nmea_sentence.header.stamp)
+        driver.add_sentence(nmea_sentence.sentence, frame_id=nmea_sentence.header.frame_id,
+                            timestamp=nmea_sentence.header.stamp)
     except ValueError as e:
-        rospy.logwarn("Value error, likely due to missing fields in the NMEA message. Error was: %s. Please report this issue at github.com/ros-drivers/nmea_navsat_driver, including a bag file with the NMEA sentences that caused it." % e)
+        rclpy.get_logger().warn(
+            "Value error, likely due to missing fields in the NMEA message. Error was: %s. Please report this issue at github.com/ros-drivers/nmea_navsat_driver, including a bag file with the NMEA sentences that caused it." % e)
+
+
+def main(args=None):
+    rclpy.init(args=args)
+
+    driver = Ros2NMEADriver()
+    driver.get_frame_id()
+
+    driver.create_subscription(
+        Sentence, 'nmea_sentence', nmea_sentence_callback, driver)
+
+    rclpy.spin(node)
+
+    rclpy.shutdown()
+
 
 if __name__ == '__main__':
-    rospy.init_node('nmea_topic_driver')
-
-    driver = libnmea_navsat_driver.driver.RosNMEADriver()
-
-    rospy.Subscriber("nmea_sentence", Sentence, nmea_sentence_callback,
-            driver)
-
-    rospy.spin()
+    main()
