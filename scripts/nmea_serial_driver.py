@@ -59,7 +59,9 @@ def main(args=None):
                     driver.add_sentence(data, frame_id)
                 except ValueError as e:
                     driver.get_logger().warn(
-                        "Value error, likely due to missing fields in the NMEA message. Error was: %s. Please report this issue at github.com/ros-drivers/nmea_navsat_driver, including a bag file with the NMEA sentences that caused it." % e)
+                        "Value error, likely due to missing fields in the NMEA message. Error was: %s. "
+                        "Please report this issue at github.com/ros-drivers/nmea_navsat_driver, including a bag file "
+                        "with the NMEA sentences that caused it." % e)
 
         except Exception as e:
             driver.get_logger().error("Ros error: {0}".format(e))
