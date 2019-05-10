@@ -44,8 +44,8 @@ if __name__ == '__main__':
 
     nmea_pub = rospy.Publisher("nmea_sentence", Sentence, queue_size=1)
 
-    serial_port = rospy.get_param('~port','/dev/ttyUSB0')
-    serial_baud = rospy.get_param('~baud',4800)
+    serial_port = rospy.get_param('~port', '/dev/ttyUSB0')
+    serial_baud = rospy.get_param('~baud', 4800)
 
     # Get the frame_id
     frame_id = RosNMEADriver.get_frame_id()
@@ -57,10 +57,10 @@ if __name__ == '__main__':
 
             sentence = Sentence()
             sentence.header.stamp = rospy.get_rostime()
-	    sentence.header.frame_id = frame_id
+            sentence.header.frame_id = frame_id
             sentence.sentence = data
 
             nmea_pub.publish(sentence)
 
     except rospy.ROSInterruptException:
-        GPS.close() #Close GPS serial port
+        GPS.close()  # Close GPS serial port

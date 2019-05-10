@@ -47,8 +47,10 @@ class RosNMEADriver(object):
     def __init__(self):
         self.fix_pub = rospy.Publisher('fix', NavSatFix, queue_size=1)
         self.vel_pub = rospy.Publisher('vel', TwistStamped, queue_size=1)
-        self.heading_pub = rospy.Publisher('heading', QuaternionStamped, queue_size=1)
-        self.time_ref_pub = rospy.Publisher('time_reference', TimeReference, queue_size=1)
+        self.heading_pub = rospy.Publisher(
+            'heading', QuaternionStamped, queue_size=1)
+        self.time_ref_pub = rospy.Publisher(
+            'time_reference', TimeReference, queue_size=1)
 
         self.time_ref_source = rospy.get_param('~time_ref_source', None)
         self.use_RMC = rospy.get_param('~useRMC', False)
@@ -71,49 +73,49 @@ class RosNMEADriver(object):
         each entry containing a tuple consisting of a default estimated
         position error, a NavSatStatus value, and a NavSatFix covariance value."""
         self.gps_qualities = {
-          # Unknown
-          -1: [
-              self.default_epe_quality0,
-              NavSatStatus.STATUS_NO_FIX,
-              NavSatFix.COVARIANCE_TYPE_UNKNOWN
-              ],
-          # Invalid
-          0: [
-              self.default_epe_quality0,
-              NavSatStatus.STATUS_NO_FIX,
-              NavSatFix.COVARIANCE_TYPE_UNKNOWN
-              ],
-          # SPS
-          1: [
-              self.default_epe_quality1,
-              NavSatStatus.STATUS_FIX,
-              NavSatFix.COVARIANCE_TYPE_APPROXIMATED
-              ],
-          # DGPS
-          2: [
-              self.default_epe_quality2,
-              NavSatStatus.STATUS_SBAS_FIX,
-              NavSatFix.COVARIANCE_TYPE_APPROXIMATED
-              ],
-          # RTK Fix
-          4: [
-              self.default_epe_quality4,
-              NavSatStatus.STATUS_GBAS_FIX,
-              NavSatFix.COVARIANCE_TYPE_APPROXIMATED
-              ],
-          # RTK Float
-          5: [
-              self.default_epe_quality5,
-              NavSatStatus.STATUS_GBAS_FIX,
-              NavSatFix.COVARIANCE_TYPE_APPROXIMATED
-              ],
-          # WAAS
-          9: [
-              self.default_epe_quality9,
-              NavSatStatus.STATUS_GBAS_FIX,
-              NavSatFix.COVARIANCE_TYPE_APPROXIMATED
-              ]
-          }
+            # Unknown
+            -1: [
+                self.default_epe_quality0,
+                NavSatStatus.STATUS_NO_FIX,
+                NavSatFix.COVARIANCE_TYPE_UNKNOWN
+            ],
+            # Invalid
+            0: [
+                self.default_epe_quality0,
+                NavSatStatus.STATUS_NO_FIX,
+                NavSatFix.COVARIANCE_TYPE_UNKNOWN
+            ],
+            # SPS
+            1: [
+                self.default_epe_quality1,
+                NavSatStatus.STATUS_FIX,
+                NavSatFix.COVARIANCE_TYPE_APPROXIMATED
+            ],
+            # DGPS
+            2: [
+                self.default_epe_quality2,
+                NavSatStatus.STATUS_SBAS_FIX,
+                NavSatFix.COVARIANCE_TYPE_APPROXIMATED
+            ],
+            # RTK Fix
+            4: [
+                self.default_epe_quality4,
+                NavSatStatus.STATUS_GBAS_FIX,
+                NavSatFix.COVARIANCE_TYPE_APPROXIMATED
+            ],
+            # RTK Float
+            5: [
+                self.default_epe_quality5,
+                NavSatStatus.STATUS_GBAS_FIX,
+                NavSatFix.COVARIANCE_TYPE_APPROXIMATED
+            ],
+            # WAAS
+            9: [
+                self.default_epe_quality9,
+                NavSatStatus.STATUS_GBAS_FIX,
+                NavSatFix.COVARIANCE_TYPE_APPROXIMATED
+            ]
+        }
 
     # Returns True if we successfully did something with the passed in
     # nmea_string
@@ -123,9 +125,12 @@ class RosNMEADriver(object):
                           "Sentence was: %s" % repr(nmea_string))
             return False
 
-        parsed_sentence = libnmea_navsat_driver.parser.parse_nmea_sentence(nmea_string)
+        parsed_sentence = libnmea_navsat_driver.parser.parse_nmea_sentence(
+            nmea_string)
         if not parsed_sentence:
-            rospy.logdebug("Failed to parse NMEA sentence. Sentence was: %s" % nmea_string)
+            rospy.logdebug(
+                "Failed to parse NMEA sentence. Sentence was: %s" %
+                nmea_string)
             return False
 
         if timestamp:
@@ -150,11 +155,11 @@ class RosNMEADriver(object):
             data = parsed_sentence['GGA']
             fix_type = data['fix_type']
             if not (fix_type in self.gps_qualities):
-              fix_type = -1
+                fix_type = -1
             gps_qual = self.gps_qualities[fix_type]
-            default_epe = gps_qual[0];
+            default_epe = gps_qual[0]
             current_fix.status.status = gps_qual[1]
-            current_fix.position_covariance_type = gps_qual[2];
+            current_fix.position_covariance_type = gps_qual[2]
 
             if gps_qual > 0:
                 self.valid_fix = True
@@ -177,7 +182,8 @@ class RosNMEADriver(object):
             altitude = data['altitude'] + data['mean_sea_level']
             current_fix.altitude = altitude
 
-            # use default epe std_dev unless we've received a GST sentence with epes
+            # use default epe std_dev unless we've received a GST sentence with
+            # epes
             if not self.using_receiver_epe or math.isnan(self.lon_std_dev):
                 self.lon_std_dev = default_epe
             if not self.using_receiver_epe or math.isnan(self.lat_std_dev):
@@ -188,27 +194,30 @@ class RosNMEADriver(object):
             hdop = data['hdop']
             current_fix.position_covariance[0] = (hdop * self.lon_std_dev) ** 2
             current_fix.position_covariance[4] = (hdop * self.lat_std_dev) ** 2
-            current_fix.position_covariance[8] = (2 * hdop * self.alt_std_dev) ** 2  # FIXME
+            current_fix.position_covariance[8] = (
+                2 * hdop * self.alt_std_dev) ** 2  # FIXME
 
             self.fix_pub.publish(current_fix)
 
             if not math.isnan(data['utc_time']):
-                current_time_ref.time_ref = rospy.Time.from_sec(data['utc_time'])
+                current_time_ref.time_ref = rospy.Time.from_sec(
+                    data['utc_time'])
                 self.last_valid_fix_time = current_time_ref
                 self.time_ref_pub.publish(current_time_ref)
 
         elif not self.use_RMC and 'VTG' in parsed_sentence:
             data = parsed_sentence['VTG']
 
-            # Only report VTG data when you've received a valid GGA fix as well.
+            # Only report VTG data when you've received a valid GGA fix as
+            # well.
             if self.valid_fix:
                 current_vel = TwistStamped()
                 current_vel.header.stamp = current_time
                 current_vel.header.frame_id = frame_id
                 current_vel.twist.linear.x = data['speed'] * \
-                                             math.sin(data['true_course'])
+                    math.sin(data['true_course'])
                 current_vel.twist.linear.y = data['speed'] * \
-                                             math.cos(data['true_course'])
+                    math.cos(data['true_course'])
                 self.vel_pub.publish(current_vel)
 
         elif 'RMC' in parsed_sentence:
@@ -240,10 +249,12 @@ class RosNMEADriver(object):
                 self.fix_pub.publish(current_fix)
 
                 if not math.isnan(data['utc_time']):
-                    current_time_ref.time_ref = rospy.Time.from_sec(data['utc_time'])
+                    current_time_ref.time_ref = rospy.Time.from_sec(
+                        data['utc_time'])
                     self.time_ref_pub.publish(current_time_ref)
 
-            # Publish velocity from RMC regardless, since GGA doesn't provide it.
+            # Publish velocity from RMC regardless, since GGA doesn't provide
+            # it.
             if data['fix_valid']:
                 current_vel = TwistStamped()
                 current_vel.header.stamp = current_time
