@@ -1,9 +1,17 @@
+from glob import glob
+import os
 from setuptools import setup
 
+PACKAGE_NAME = "nmea_navsat_driver"
+SHARE_DIR = os.path.join("share", PACKAGE_NAME)
+
 setup(
-    name='libnmea_navsat_driver',
+    name=PACKAGE_NAME,
     version='0.5.1',
     packages=["scripts", "libnmea_navsat_driver"],
+    data_files=[
+        (os.path.join(SHARE_DIR, "launch"), glob(os.path.join("launch", "*.launch.py"))),
+        (os.path.join(SHARE_DIR, "config"), glob(os.path.join("config", "*.yaml")))],
     package_dir={'': 'src',
                  "scripts": "scripts"},
     py_modules=[],
