@@ -45,7 +45,9 @@ def nmea_sentence_callback(nmea_sentence, driver):
                             timestamp=nmea_sentence.header.stamp)
     except ValueError as e:
         rclpy.get_logger().warn(
-            "Value error, likely due to missing fields in the NMEA message. Error was: %s. Please report this issue at github.com/ros-drivers/nmea_navsat_driver, including a bag file with the NMEA sentences that caused it." % e)
+            "Value error, likely due to missing fields in the NMEA message. Error was: %s. "
+            "Please report this issue at github.com/ros-drivers/nmea_navsat_driver, including a bag file with "
+            "the NMEA sentences that caused it." % e)
 
 
 def main(args=None):
