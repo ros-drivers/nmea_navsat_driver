@@ -55,14 +55,18 @@ def main(args=None):
 
     try:
         GPS = serial.Serial(port=serial_port, baudrate=serial_baud, timeout=2)
-        while rclpy.ok():
-            data = GPS.readline().strip()
+        try:
+            while rclpy.ok():
+                data = GPS.readline().strip()
 
-            sentence = Sentence()
-            sentence.header.stamp = driver.get_clock().now().to_msg()
-            sentence.header.frame_id = frame_id
-            sentence.sentence = data
-            nmea_pub.publish(sentence)
+                sentence = Sentence()
+                sentence.header.stamp = driver.get_clock().now().to_msg()
+                sentence.header.frame_id = frame_id
+                sentence.sentence = data
+                nmea_pub.publish(sentence)
 
-    except rclpy.ROSInterruptException:
-        GPS.close()  # Close GPS serial port
+        except Exception as e:
+            driver.get_logger().error("Ros error: {0}".format(e))
+            GPS.close()  # Close GPS serial port
+    except serial.SerialException as ex:
+        driver.get_logger().fatal("Could not open serial port: I/O error({0}): {1}".format(ex.errno, ex.strerror))
