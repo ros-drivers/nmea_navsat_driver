@@ -55,7 +55,8 @@ if __name__ == '__main__':
 
     driver = libnmea_navsat_driver.driver.RosNMEADriver()
 
-    # Connection-loop: connect and keep receiving. If receiving fails, reconnect
+    # Connection-loop: connect and keep receiving. If receiving fails,
+    # reconnect
     while not rospy.is_shutdown():
         try:
             # Create a socket
@@ -66,11 +67,14 @@ if __name__ == '__main__':
 
             # Set timeout
             socket_.settimeout(timeout)
-        except socket.error, exc:
-            rospy.logerr("Caught exception socket.error when setting up socket: %s" % exc)
+        except socket.error as exc:
+            rospy.logerr(
+                "Caught exception socket.error when setting up socket: %s" %
+                exc)
             sys.exit(1)
 
-        # recv-loop: When we're connected, keep receiving stuff until that fails
+        # recv-loop: When we're connected, keep receiving stuff until that
+        # fails
         while not rospy.is_shutdown():
             try:
                 data, remote_address = socket_.recvfrom(buffer_size)
@@ -83,14 +87,19 @@ if __name__ == '__main__':
                     try:
                         driver.add_sentence(data, frame_id)
                     except ValueError as e:
-                        rospy.logwarn("Value error, likely due to missing fields in the NMEA message. "
-                                    "Error was: %s. Please report this issue at github.com/ros-drivers/nmea_navsat_driver, "
-                                    "including a bag file with the NMEA sentences that caused it." % e)
+                        rospy.logwarn(
+                            "Value error, likely due to missing fields in the NMEA message. "
+                            "Error was: %s. Please report this issue at "
+                            "github.com/ros-drivers/nmea_navsat_driver, including a bag file with the NMEA "
+                            "sentences that caused it." %
+                            e)
 
-            except socket.error, exc:
-                rospy.logerr("Caught exception socket.error during recvfrom: %s" % exc)
+            except socket.error as exc:
+                rospy.logerr(
+                    "Caught exception socket.error during recvfrom: %s" % exc)
                 socket_.close()
-                # This will break out of the recv-loop so we start another iteration of the connection-loop
+                # This will break out of the recv-loop so we start another
+                # iteration of the connection-loop
                 break
 
         socket_.close()  # Close socket
