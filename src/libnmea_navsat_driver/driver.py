@@ -45,7 +45,8 @@ class RosNMEADriver(object):
     def __init__(self):
         self.fix_pub = rospy.Publisher('fix', NavSatFix, queue_size=1)
         self.vel_pub = rospy.Publisher('vel', TwistStamped, queue_size=1)
-        self.time_ref_pub = rospy.Publisher('time_reference', TimeReference, queue_size=1)
+        self.time_ref_pub = rospy.Publisher(
+            'time_reference', TimeReference, queue_size=1)
 
         self.time_ref_source = rospy.get_param('~time_ref_source', None)
         self.use_RMC = rospy.get_param('~useRMC', False)
@@ -59,9 +60,12 @@ class RosNMEADriver(object):
                           "Sentence was: %s" % repr(nmea_string))
             return False
 
-        parsed_sentence = libnmea_navsat_driver.parser.parse_nmea_sentence(nmea_string)
+        parsed_sentence = libnmea_navsat_driver.parser.parse_nmea_sentence(
+            nmea_string)
         if not parsed_sentence:
-            rospy.logdebug("Failed to parse NMEA sentence. Sentece was: %s" % nmea_string)
+            rospy.logdebug(
+                "Failed to parse NMEA sentence. Sentence was: %s" %
+                nmea_string)
             return False
 
         if timestamp:
@@ -130,22 +134,24 @@ class RosNMEADriver(object):
             self.fix_pub.publish(current_fix)
 
             if not math.isnan(data['utc_time']):
-                current_time_ref.time_ref = rospy.Time.from_sec(data['utc_time'])
+                current_time_ref.time_ref = rospy.Time.from_sec(
+                    data['utc_time'])
                 self.last_valid_fix_time = current_time_ref
                 self.time_ref_pub.publish(current_time_ref)
 
         elif not self.use_RMC and 'VTG' in parsed_sentence:
             data = parsed_sentence['VTG']
 
-            # Only report VTG data when you've received a valid GGA fix as well.
+            # Only report VTG data when you've received a valid GGA fix as
+            # well.
             if self.valid_fix:
                 current_vel = TwistStamped()
                 current_vel.header.stamp = current_time
                 current_vel.header.frame_id = frame_id
                 current_vel.twist.linear.x = data['speed'] * \
-                                             math.sin(data['true_course'])
+                    math.sin(data['true_course'])
                 current_vel.twist.linear.y = data['speed'] * \
-                                             math.cos(data['true_course'])
+                    math.cos(data['true_course'])
                 self.vel_pub.publish(current_vel)
 
         elif 'RMC' in parsed_sentence:
@@ -177,10 +183,12 @@ class RosNMEADriver(object):
                 self.fix_pub.publish(current_fix)
 
                 if not math.isnan(data['utc_time']):
-                    current_time_ref.time_ref = rospy.Time.from_sec(data['utc_time'])
+                    current_time_ref.time_ref = rospy.Time.from_sec(
+                        data['utc_time'])
                     self.time_ref_pub.publish(current_time_ref)
 
-            # Publish velocity from RMC regardless, since GGA doesn't provide it.
+            # Publish velocity from RMC regardless, since GGA doesn't provide
+            # it.
             if data['fix_valid']:
                 current_vel = TwistStamped()
                 current_vel.header.stamp = current_time
