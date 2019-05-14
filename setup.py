@@ -30,6 +30,6 @@ setup(
         'console_scripts': ['nmea_serial_driver = scripts.nmea_serial_driver:main',
                             'nmea_socket_driver = scripts.nmea_socket_driver:main',
                             'nmea_topic_driver = scripts.nmea_topic_driver:main',
-                            'nmea_topic_serial_driver = scripts.nmea_topic_serial_driver:main'],
+                            'nmea_topic_serial_reader = scripts.nmea_topic_serial_reader:main'],
     }
 )
