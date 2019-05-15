@@ -66,16 +66,21 @@ def convert_time(nmea_utc):
     utc_list = list(utc_struct)
     # If one of the time fields is empty, return NaN seconds
     if not nmea_utc[0:2] or not nmea_utc[2:4] or not nmea_utc[4:6]:
-        return float('NaN')
+        return (float('NaN'))
     else:
         hours = int(nmea_utc[0:2])
         minutes = int(nmea_utc[2:4])
         seconds = int(nmea_utc[4:6])
+        nanoseconds = int(nmea_utc[7:]) * pow(10, 9 - len(nmea_utc[7:]))
+
+        ## resolve the ambiguity of day
+        utc_list[2] += (utc_list[3] - hours) / 12
+
         utc_list[3] = hours
         utc_list[4] = minutes
         utc_list[5] = seconds
-        unix_time = calendar.timegm(tuple(utc_list))
-        return unix_time
+        secs = calendar.timegm(tuple(utc_list))
+        return secs, nanoseconds
 
 
 def convert_status_flag(status_flag):

@@ -199,9 +199,9 @@ class RosNMEADriver(object):
 
             self.fix_pub.publish(current_fix)
 
-            if not math.isnan(data['utc_time']):
-                current_time_ref.time_ref = rospy.Time.from_sec(
-                    data['utc_time'])
+            if not math.isnan(data['utc_time'][0]):
+                current_time_ref.time_ref = rospy.Time(
+                    data['utc_time'][0], data['utc_time'][1])
                 self.last_valid_fix_time = current_time_ref
                 self.time_ref_pub.publish(current_time_ref)
 
