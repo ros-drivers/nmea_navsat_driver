@@ -52,6 +52,7 @@ class RosNMEADriver(object):
         self.time_ref_pub = rospy.Publisher(
             'time_reference', TimeReference, queue_size=1)
 
+        self.use_GNSS_time = rospy.get_param('~use_GNSS_time', False)
         self.time_ref_source = rospy.get_param('~time_ref_source', None)
         self.use_RMC = rospy.get_param('~useRMC', False)
         self.valid_fix = False
@@ -140,19 +141,24 @@ class RosNMEADriver(object):
         current_fix = NavSatFix()
         current_fix.header.stamp = current_time
         current_fix.header.frame_id = frame_id
-        current_time_ref = TimeReference()
-        current_time_ref.header.stamp = current_time
-        current_time_ref.header.frame_id = frame_id
-        if self.time_ref_source:
-            current_time_ref.source = self.time_ref_source
-        else:
-            current_time_ref.source = frame_id
+        if not self.use_GNSS_time:
+            current_time_ref = TimeReference()
+            current_time_ref.header.stamp = current_time
+            current_time_ref.header.frame_id = frame_id
+            if self.time_ref_source:
+                current_time_ref.source = self.time_ref_source
+            else:
+                current_time_ref.source = frame_id
 
         if not self.use_RMC and 'GGA' in parsed_sentence:
             current_fix.position_covariance_type = \
                 NavSatFix.COVARIANCE_TYPE_APPROXIMATED
 
             data = parsed_sentence['GGA']
+
+            if self.use_GNSS_time:
+                current_fix.header.stamp = rospy.Time(data['utc_time'][0], data['utc_time'][1])
+
             fix_type = data['fix_type']
             if not (fix_type in self.gps_qualities):
                 fix_type = -1
@@ -199,7 +205,7 @@ class RosNMEADriver(object):
 
             self.fix_pub.publish(current_fix)
 
-            if not math.isnan(data['utc_time'][0]):
+            if not (math.isnan(data['utc_time'][0]) or self.use_GNSS_time):
                 current_time_ref.time_ref = rospy.Time(
                     data['utc_time'][0], data['utc_time'][1])
                 self.last_valid_fix_time = current_time_ref
@@ -222,6 +228,9 @@ class RosNMEADriver(object):
 
         elif 'RMC' in parsed_sentence:
             data = parsed_sentence['RMC']
+
+            if self.use_GNSS_time:
+                current_fix.header.stamp = rospy.Time(data['utc_time'][0], data['utc_time'][1])
 
             # Only publish a fix from RMC if the use_RMC flag is set.
             if self.use_RMC:
@@ -248,7 +257,7 @@ class RosNMEADriver(object):
 
                 self.fix_pub.publish(current_fix)
 
-                if not math.isnan(data['utc_time'][0]):
+                if not (math.isnan(data['utc_time'][0]) or self.use_GNSS_time):
                     current_time_ref.time_ref = rospy.Time(
                         data['utc_time'][0], data['utc_time'][1])
                     self.time_ref_pub.publish(current_time_ref)

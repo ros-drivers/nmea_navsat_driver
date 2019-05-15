@@ -5,6 +5,7 @@
   <arg name="port" default="/dev/ttyUSB0" />
   <arg name="baud" default="4800" />
   <arg name="frame_id" default="gps" />
+  <arg name="use_GNSS_time" default="True" />
   <arg name="time_ref_source" default="gps" />
   <arg name="useRMC" default="False" />
 
@@ -12,6 +13,7 @@
     <param name="port" value="$(arg port)"/>
     <param name="baud" value="$(arg baud)" />
     <param name="frame_id" value="$(arg frame_id)" />
+    <param name="use_GNSS_time" value="$(arg use_GNSS_time)" />
     <param name="time_ref_source" value="$(arg time_ref_source)" />
     <param name="useRMC" value="$(arg useRMC)" />
   </node>
