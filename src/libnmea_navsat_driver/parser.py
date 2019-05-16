@@ -74,7 +74,7 @@ def convert_time(nmea_utc):
         nanoseconds = int(nmea_utc[7:]) * pow(10, 9 - len(nmea_utc[7:]))
 
         ## resolve the ambiguity of day
-        utc_list[2] += (utc_list[3] - hours) / 12
+        utc_list[2] += (utc_list[3] - hours) // 12
 
         utc_list[3] = hours
         utc_list[4] = minutes
@@ -82,6 +82,32 @@ def convert_time(nmea_utc):
         secs = calendar.timegm(tuple(utc_list))
         return secs, nanoseconds
 
+def convert_time_rmc(date_str, time_str):
+    utc_struct = time.gmtime()
+    utc_list = list(utc_struct)
+    # If one of the time fields is empty, return NaN seconds
+    if not time_str[0:2] or not time_str[2:4] or not time_str[4:6]:
+        return (float('NaN'))
+    else:
+
+        ## resolve the ambiguity of century
+        pc_year = utc_list[0] % 100
+        utc_year = int(date_str[4:6])
+        utc_list[0] += (pc_year - utc_year) // 50
+
+        utc_list[1] = int(date_str[2:4])
+        utc_list[2] = int(date_str[0:2])
+
+        hours = int(time_str[0:2])
+        minutes = int(time_str[2:4])
+        seconds = int(time_str[4:6])
+        nanoseconds = int(time_str[7:]) * pow(10, 9 - len(time_str[7:]))
+
+        utc_list[3] = hours
+        utc_list[4] = minutes
+        utc_list[5] = seconds
+        secs = calendar.timegm(tuple(utc_list))
+        return secs, nanoseconds
 
 def convert_status_flag(status_flag):
     if status_flag == "A":
@@ -118,7 +144,7 @@ parse_maps = {
         ("utc_time", convert_time, 1),
     ],
     "RMC": [
-        ("utc_time", convert_time, 1),
+        # ("utc_time", convert_time, 1),
         ("fix_valid", convert_status_flag, 2),
         ("latitude", convert_latitude, 3),
         ("latitude_direction", str, 4),
@@ -126,6 +152,7 @@ parse_maps = {
         ("longitude_direction", str, 6),
         ("speed", convert_knots_to_mps, 7),
         ("true_course", convert_deg_to_rads, 8),
+        # ("utc_date", convert_date, 9)
     ],
     "GST": [
         ("utc_time", convert_time, 1),
@@ -171,5 +198,8 @@ def parse_nmea_sentence(nmea_sentence):
     parsed_sentence = {}
     for entry in parse_map:
         parsed_sentence[entry[0]] = entry[1](fields[entry[2]])
+
+    if sentence_type == "RMC":
+        parsed_sentence["utc_time"] = convert_time_rmc(fields[9], fields[1])
 
     return {sentence_type: parsed_sentence}
