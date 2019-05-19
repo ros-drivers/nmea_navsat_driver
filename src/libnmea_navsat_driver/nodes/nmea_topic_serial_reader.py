@@ -1,8 +1,6 @@
-#! /usr/bin/env python
-
 # Software License Agreement (BSD License)
 #
-# Copyright (c) 2019, Ed Venator <evenator@gmail.com>
+# Copyright (c) 2013, Eric Perko
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -32,6 +30,36 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-import libnmea_navsat_driver.nodes.nmea_socket_driver
+import serial
 
-libnmea_navsat_driver.nodes.nmea_socket_driver.main()
+from nmea_msgs.msg import Sentence
+import rospy
+
+from libnmea_navsat_driver.driver import RosNMEADriver
+
+
+def main():
+    rospy.init_node('nmea_topic_serial_reader')
+
+    nmea_pub = rospy.Publisher("nmea_sentence", Sentence, queue_size=1)
+
+    serial_port = rospy.get_param('~port', '/dev/ttyUSB0')
+    serial_baud = rospy.get_param('~baud', 4800)
+
+    # Get the frame_id
+    frame_id = RosNMEADriver.get_frame_id()
+
+    try:
+        GPS = serial.Serial(port=serial_port, baudrate=serial_baud, timeout=2)
+        while not rospy.is_shutdown():
+            data = GPS.readline().strip()
+
+            sentence = Sentence()
+            sentence.header.stamp = rospy.get_rostime()
+            sentence.header.frame_id = frame_id
+            sentence.sentence = data
+
+            nmea_pub.publish(sentence)
+
+    except rospy.ROSInterruptException:
+        GPS.close()  # Close GPS serial port

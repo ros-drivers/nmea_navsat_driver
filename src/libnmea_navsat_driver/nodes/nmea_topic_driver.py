@@ -1,8 +1,6 @@
-#! /usr/bin/env python
-
 # Software License Agreement (BSD License)
 #
-# Copyright (c) 2019, Ed Venator <evenator@gmail.com>
+# Copyright (c) 2013, Eric Perko
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -32,6 +30,32 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-import libnmea_navsat_driver.nodes.nmea_socket_driver
+from nmea_msgs.msg import Sentence
+import rospy
 
-libnmea_navsat_driver.nodes.nmea_socket_driver.main()
+from libnmea_navsat_driver.driver import RosNMEADriver
+
+
+def nmea_sentence_callback(nmea_sentence, driver):
+    try:
+        driver.add_sentence(
+            nmea_sentence.sentence,
+            frame_id=nmea_sentence.header.frame_id,
+            timestamp=nmea_sentence.header.stamp)
+    except ValueError as e:
+        rospy.logwarn(
+            "Value error, likely due to missing fields in the NMEA message. "
+            "Error was: %s. Please report this issue at github.com/ros-drivers/nmea_navsat_driver, "
+            "including a bag file with the NMEA sentences that caused it." %
+            e)
+
+
+def main():
+    rospy.init_node('nmea_topic_driver')
+
+    driver = RosNMEADriver()
+
+    rospy.Subscriber("nmea_sentence", Sentence, nmea_sentence_callback,
+                     driver)
+
+    rospy.spin()
