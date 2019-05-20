@@ -1,5 +1,3 @@
-#! /usr/bin/env python
-
 # Software License Agreement (BSD License)
 #
 # Copyright (c) 2016, Rein Appeldoorn
@@ -95,7 +93,3 @@ def main(args=None):
                 break
 
         socket_.close()  # Close socket
-
-
-if __name__ == '__main__':
-    main()

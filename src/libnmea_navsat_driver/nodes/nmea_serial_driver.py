@@ -1,5 +1,3 @@
-#! /usr/bin/env python
-
 # Software License Agreement (BSD License)
 #
 # Copyright (c) 2013, Eric Perko
@@ -36,7 +34,6 @@ import serial
 
 import rclpy
 
-from nmea_msgs.msg import Sentence
 from libnmea_navsat_driver.driver import Ros2NMEADriver
 
 
@@ -44,26 +41,25 @@ def main(args=None):
     rclpy.init(args=args)
 
     driver = Ros2NMEADriver()
-
-    nmea_pub = driver.create_publisher(Sentence, "nmea_sentence")
+    frame_id = driver.get_frame_id()
 
     serial_port = driver.get_parameter('port').value or '/dev/ttyUSB0'
     serial_baud = driver.get_parameter('baud').value or 4800
-
-    # Get the frame_id
-    frame_id = driver.get_frame_id()
 
     try:
         GPS = serial.Serial(port=serial_port, baudrate=serial_baud, timeout=2)
         try:
             while rclpy.ok():
                 data = GPS.readline().strip()
-
-                sentence = Sentence()
-                sentence.header.stamp = driver.get_clock().now().to_msg()
-                sentence.header.frame_id = frame_id
-                sentence.sentence = data
-                nmea_pub.publish(sentence)
+                try:
+                    if isinstance(data, bytes):
+                        data = data.decode("utf-8")
+                    driver.add_sentence(data, frame_id)
+                except ValueError as e:
+                    driver.get_logger().warn(
+                        "Value error, likely due to missing fields in the NMEA message. Error was: %s. "
+                        "Please report this issue at github.com/ros-drivers/nmea_navsat_driver, including a bag file "
+                        "with the NMEA sentences that caused it." % e)
 
         except Exception as e:
             driver.get_logger().error("Ros error: {0}".format(e))
