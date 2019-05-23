@@ -60,9 +60,9 @@ class RosNMEADriver(object):
         # epe = estimated position error
         self.default_epe_quality0 = rospy.get_param('~epe_quality0', 1000000)
         self.default_epe_quality1 = rospy.get_param('~epe_quality1', 4.0)
-        self.default_epe_quality2 = rospy.get_param('~epe_quality2', 0.1)
+        self.default_epe_quality2 = rospy.get_param('~epe_quality2', 4.0)
         self.default_epe_quality4 = rospy.get_param('~epe_quality4', 0.02)
-        self.default_epe_quality5 = rospy.get_param('~epe_quality5', 4.0)
+        self.default_epe_quality5 = rospy.get_param('~epe_quality5', 0.1)
         self.default_epe_quality9 = rospy.get_param('~epe_quality9', 3.0)
         self.using_receiver_epe = False
 
