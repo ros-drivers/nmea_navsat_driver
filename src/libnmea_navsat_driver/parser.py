@@ -71,7 +71,7 @@ def convert_time(nmea_utc):
         hours = int(nmea_utc[0:2])
         minutes = int(nmea_utc[2:4])
         seconds = int(nmea_utc[4:6])
-        nanoseconds = int(nmea_utc[7:]) * pow(10, 9 - len(nmea_utc[7:]))
+        nanosecs = int(nmea_utc[7:]) * pow(10, 9 - len(nmea_utc[7:]))
 
         ## resolve the ambiguity of day
         utc_list[2] += (utc_list[3] - hours) // 12
@@ -80,7 +80,7 @@ def convert_time(nmea_utc):
         utc_list[4] = minutes
         utc_list[5] = seconds
         secs = calendar.timegm(tuple(utc_list))
-        return secs, nanoseconds
+        return secs, nanosecs
 
 def convert_time_rmc(date_str, time_str):
     utc_struct = time.gmtime()
@@ -144,7 +144,6 @@ parse_maps = {
         ("utc_time", convert_time, 1),
     ],
     "RMC": [
-        # ("utc_time", convert_time, 1),
         ("fix_valid", convert_status_flag, 2),
         ("latitude", convert_latitude, 3),
         ("latitude_direction", str, 4),
@@ -152,7 +151,6 @@ parse_maps = {
         ("longitude_direction", str, 6),
         ("speed", convert_knots_to_mps, 7),
         ("true_course", convert_deg_to_rads, 8),
-        # ("utc_date", convert_date, 9)
     ],
     "GST": [
         ("utc_time", convert_time, 1),
