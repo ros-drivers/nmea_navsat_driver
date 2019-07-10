@@ -159,6 +159,7 @@ class RosNMEADriver(object):
 
             if self.use_GNSS_time:
                 if math.isnan(data['utc_time'][0]):
+                    rospy.logwarn("Time in the NMEA sentence is NOT valid")
                     return False
                 current_fix.header.stamp = rospy.Time(data['utc_time'][0], data['utc_time'][1])
 
@@ -234,6 +235,7 @@ class RosNMEADriver(object):
 
             if self.use_GNSS_time:
                 if math.isnan(data['utc_time'][0]):
+                    rospy.logwarn("Time in the NMEA sentence is NOT valid")
                     return False
                 current_fix.header.stamp = rospy.Time(data['utc_time'][0], data['utc_time'][1])
 
