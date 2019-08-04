@@ -4,4 +4,4 @@ nmea_navsat_driver:
     baud: 4800
     frame_id: "gps"
     time_ref_source: "gps"
-    useRMC: "False"
+    useRMC: False

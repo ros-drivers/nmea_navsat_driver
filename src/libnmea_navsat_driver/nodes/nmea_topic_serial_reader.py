@@ -43,10 +43,10 @@ def main(args=None):
 
     driver = Ros2NMEADriver()
 
-    nmea_pub = driver.create_publisher(Sentence, "nmea_sentence")
+    nmea_pub = driver.create_publisher(Sentence, "nmea_sentence", 10)
 
-    serial_port = driver.get_parameter('port').value or '/dev/ttyUSB0'
-    serial_baud = driver.get_parameter('baud').value or 4800
+    serial_port = driver.declare_parameter('port', '/dev/ttyUSB0').value
+    serial_baud = driver.declare_parameter('baud', 4800).value
 
     # Get the frame_id
     frame_id = driver.get_frame_id()
