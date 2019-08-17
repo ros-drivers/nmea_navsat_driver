@@ -45,8 +45,10 @@ class RosNMEADriver(object):
     def __init__(self):
         self.fix_pub = rospy.Publisher('fix', NavSatFix, queue_size=1)
         self.vel_pub = rospy.Publisher('vel', TwistStamped, queue_size=1)
-        self.time_ref_pub = rospy.Publisher(
-            'time_reference', TimeReference, queue_size=1)
+        self.use_GNSS_time = rospy.get_param('~use_GNSS_time', False)
+        if not self.use_GNSS_time:
+            self.time_ref_pub = rospy.Publisher(
+                'time_reference', TimeReference, queue_size=1)
 
         self.time_ref_source = rospy.get_param('~time_ref_source', None)
         self.use_RMC = rospy.get_param('~useRMC', False)
@@ -75,16 +77,24 @@ class RosNMEADriver(object):
         current_fix = NavSatFix()
         current_fix.header.stamp = current_time
         current_fix.header.frame_id = frame_id
-        current_time_ref = TimeReference()
-        current_time_ref.header.stamp = current_time
-        current_time_ref.header.frame_id = frame_id
-        if self.time_ref_source:
-            current_time_ref.source = self.time_ref_source
-        else:
-            current_time_ref.source = frame_id
+        if not self.use_GNSS_time:
+            current_time_ref = TimeReference()
+            current_time_ref.header.stamp = current_time
+            current_time_ref.header.frame_id = frame_id
+            if self.time_ref_source:
+                current_time_ref.source = self.time_ref_source
+            else:
+                current_time_ref.source = frame_id
 
         if not self.use_RMC and 'GGA' in parsed_sentence:
             data = parsed_sentence['GGA']
+
+            if self.use_GNSS_time:
+                if math.isnan(data['utc_time'][0]):
+                    rospy.logwarn("Time in the NMEA sentence is NOT valid")
+                    return False
+                current_fix.header.stamp = rospy.Time(data['utc_time'][0], data['utc_time'][1])
+
             gps_qual = data['fix_type']
             if gps_qual == 0:
                 current_fix.status.status = NavSatStatus.STATUS_NO_FIX
@@ -133,9 +143,9 @@ class RosNMEADriver(object):
 
             self.fix_pub.publish(current_fix)
 
-            if not math.isnan(data['utc_time']):
-                current_time_ref.time_ref = rospy.Time.from_sec(
-                    data['utc_time'])
+            if not (math.isnan(data['utc_time'][0]) or self.use_GNSS_time):
+                current_time_ref.time_ref = rospy.Time(
+                    data['utc_time'][0], data['utc_time'][1])
                 self.last_valid_fix_time = current_time_ref
                 self.time_ref_pub.publish(current_time_ref)
 
@@ -156,6 +166,12 @@ class RosNMEADriver(object):
 
         elif 'RMC' in parsed_sentence:
             data = parsed_sentence['RMC']
+
+            if self.use_GNSS_time:
+                if math.isnan(data['utc_time'][0]):
+                    rospy.logwarn("Time in the NMEA sentence is NOT valid")
+                    return False
+                current_fix.header.stamp = rospy.Time(data['utc_time'][0], data['utc_time'][1])
 
             # Only publish a fix from RMC if the use_RMC flag is set.
             if self.use_RMC:
@@ -182,9 +198,9 @@ class RosNMEADriver(object):
 
                 self.fix_pub.publish(current_fix)
 
-                if not math.isnan(data['utc_time']):
-                    current_time_ref.time_ref = rospy.Time.from_sec(
-                        data['utc_time'])
+                if not (math.isnan(data['utc_time'][0]) or self.use_GNSS_time):
+                    current_time_ref.time_ref = rospy.Time(
+                        data['utc_time'][0], data['utc_time'][1])
                     self.time_ref_pub.publish(current_time_ref)
 
             # Publish velocity from RMC regardless, since GGA doesn't provide
