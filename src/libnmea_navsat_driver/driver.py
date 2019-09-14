@@ -46,22 +46,22 @@ class Ros2NMEADriver(Node):
     def __init__(self):
         super().__init__('nmea_navsat_driver')
 
-        self.fix_pub = self.create_publisher(NavSatFix, 'fix')
-        self.vel_pub = self.create_publisher(TwistStamped, 'vel')
-        self.heading_pub = self.create_publisher(QuaternionStamped, 'heading')
-        self.time_ref_pub = self.create_publisher(TimeReference, 'time_reference')
+        self.fix_pub = self.create_publisher(NavSatFix, 'fix', 10)
+        self.vel_pub = self.create_publisher(TwistStamped, 'vel', 10)
+        self.heading_pub = self.create_publisher(QuaternionStamped, 'heading', 10)
+        self.time_ref_pub = self.create_publisher(TimeReference, 'time_reference', 10)
 
-        self.time_ref_source = self.get_parameter('time_ref_source').value
-        self.use_RMC = self.get_parameter('useRMC').value
+        self.time_ref_source = self.declare_parameter('time_ref_source', 'gps').value
+        self.use_RMC = self.declare_parameter('useRMC', False).value
         self.valid_fix = False
 
         # epe = estimated position error
-        self.default_epe_quality0 = self.get_parameter('epe_quality0').value or 1000000
-        self.default_epe_quality1 = self.get_parameter('epe_quality1').value or 4.0
-        self.default_epe_quality2 = self.get_parameter('epe_quality2').value or 0.1
-        self.default_epe_quality4 = self.get_parameter('epe_quality4').value or 0.02
-        self.default_epe_quality5 = self.get_parameter('epe_quality5').value or 4.0
-        self.default_epe_quality9 = self.get_parameter('epe_quality9').value or 3.0
+        self.default_epe_quality0 = self.declare_parameter('epe_quality0', 1000000).value
+        self.default_epe_quality1 = self.declare_parameter('epe_quality1', 4.0).value
+        self.default_epe_quality2 = self.declare_parameter('epe_quality2', 0.1).value
+        self.default_epe_quality4 = self.declare_parameter('epe_quality4', 0.02).value
+        self.default_epe_quality5 = self.declare_parameter('epe_quality5', 4.0).value
+        self.default_epe_quality9 = self.declare_parameter('epe_quality9', 3.0).value
 
         self.using_receiver_epe = False
 
@@ -273,14 +273,9 @@ class Ros2NMEADriver(Node):
             return False
 
     """Helper method for getting the frame_id with the correct TF prefix"""
-
     def get_frame_id(self):
-        frame_id = self.get_parameter('frame_id').value or 'gps'
-        """Add the TF prefix"""
-        prefix = ""
-        prefix_param = self.get_parameter('tf_prefix').value
-        if prefix_param:
-            prefix = self.get_parameter(prefix_param).value
-            return "%s/%s" % (prefix, frame_id)
-        else:
-            return frame_id
+        frame_id = self.declare_parameter('frame_id', 'gps').value
+        prefix = self.declare_parameter('tf_prefix', '').value
+        if len(prefix):
+            return '%s/%s' % (prefix, frame_id)
+        return frame_id

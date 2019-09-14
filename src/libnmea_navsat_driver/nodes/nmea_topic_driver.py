@@ -55,7 +55,7 @@ def main(args=None):
     driver.get_frame_id()
 
     driver.create_subscription(
-        Sentence, 'nmea_sentence', nmea_sentence_callback, driver)
+        Sentence, 'nmea_sentence', nmea_sentence_callback, 10)
 
     rclpy.spin(node)
 

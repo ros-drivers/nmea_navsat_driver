@@ -43,8 +43,8 @@ def main(args=None):
     driver = Ros2NMEADriver()
     frame_id = driver.get_frame_id()
 
-    serial_port = driver.get_parameter('port').value or '/dev/ttyUSB0'
-    serial_baud = driver.get_parameter('baud').value or 4800
+    serial_port = driver.declare_parameter('port', '/dev/ttyUSB0').value 
+    serial_baud = driver.declare_parameter('baud', 4800).value
 
     try:
         GPS = serial.Serial(port=serial_port, baudrate=serial_baud, timeout=2)
