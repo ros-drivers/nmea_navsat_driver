@@ -30,6 +30,8 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+"""Provides a driver for NMEA GNSS devices."""
+
 import math
 
 import rospy
@@ -43,8 +45,27 @@ import libnmea_navsat_driver.parser
 
 
 class RosNMEADriver(object):
+    """ROS driver for NMEA GNSS devices."""
 
     def __init__(self):
+        """Initialize the ROS NMEA driver.
+
+        Creates the following ROS publishers:
+            NavSatFix publisher on the 'fix' channel.
+            TwistStamped publisher on the 'vel' channel.
+            QuaternionStamped publisher on the 'heading' channel.
+            TimeReference publisher on the 'time_reference' channel.
+
+        Reads the following ROS parameters:
+            ~time_ref_source (str): The name of the source in published TimeReference messages. (default None)
+            ~useRMC (bool): If true, use RMC NMEA messages. If false, use GGA and VTG messages. (default False)
+            ~epe_quality0 (float): Value to use for default EPE quality for fix type 0. (default 1000000)
+            ~epe_quality1 (float): Value to use for default EPE quality for fix type 1. (default 4.0)
+            ~epe_quality2 (float): Value to use for default EPE quality for fix type 2. (default (0.1)
+            ~epe_quality4 (float): Value to use for default EPE quality for fix type 4. (default 0.02)
+            ~epe_quality5 (float): Value to use for default EPE quality for fix type 5. (default 4.0)
+            ~epe_quality9 (float): Value to use for default EPE quality for fix type 9. (default 3.0)
+        """
         self.fix_pub = rospy.Publisher('fix', NavSatFix, queue_size=1)
         self.vel_pub = rospy.Publisher('vel', TwistStamped, queue_size=1)
         self.heading_pub = rospy.Publisher(
@@ -119,9 +140,18 @@ class RosNMEADriver(object):
             ]
         }
 
-    # Returns True if we successfully did something with the passed in
-    # nmea_string
     def add_sentence(self, nmea_string, frame_id, timestamp=None):
+        """Public method to provide a new NMEA sentence to the driver.
+
+        Args:
+            nmea_string (str): NMEA sentence in string form.
+            frame_id (str): TF frame ID of the GPS receiver.
+            timestamp(rospy.Time, optional): Time the sentence was received.
+                If timestamp is not specified, the current time is used.
+
+        Returns:
+            bool: True if the NMEA string is successfully processed, False if there is an error.
+        """
         if not check_nmea_checksum(nmea_string):
             rospy.logwarn("Received a sentence with an invalid checksum. " +
                           "Sentence was: %s" % repr(nmea_string))
@@ -224,10 +254,8 @@ class RosNMEADriver(object):
                 current_vel = TwistStamped()
                 current_vel.header.stamp = current_time
                 current_vel.header.frame_id = frame_id
-                current_vel.twist.linear.x = data['speed'] * \
-                    math.sin(data['true_course'])
-                current_vel.twist.linear.y = data['speed'] * \
-                    math.cos(data['true_course'])
+                current_vel.twist.linear.x = data['speed'] * math.sin(data['true_course'])
+                current_vel.twist.linear.y = data['speed'] * math.cos(data['true_course'])
                 self.vel_pub.publish(current_vel)
 
         elif 'RMC' in parsed_sentence:
@@ -303,12 +331,18 @@ class RosNMEADriver(object):
         else:
             return False
 
-    """Helper method for getting the frame_id with the correct TF prefix"""
-
     @staticmethod
     def get_frame_id():
+        """Get the TF frame_id.
+
+        Queries rosparam for the ~frame_id param. If a tf_prefix param is set,
+        the frame_id is prefixed with the prefix.
+
+        Returns:
+            str: The fully-qualified TF frame ID.
+        """
         frame_id = rospy.get_param('~frame_id', 'gps')
-        """Add the TF prefix"""
+        # Add the TF prefix
         prefix = ""
         prefix_param = rospy.search_param('tf_prefix')
         if prefix_param:
