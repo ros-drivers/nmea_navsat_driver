@@ -30,6 +30,9 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+"""Defines the main method for the nmea_socket_driver executable."""
+
+
 import socket
 import sys
 
@@ -39,6 +42,16 @@ from libnmea_navsat_driver.driver import RosNMEADriver
 
 
 def main():
+    """Create and run the nmea_socket_driver ROS node.
+
+    Creates a ROS NMEA Driver and feeds it NMEA sentence strings from a UDP socket.
+
+    ROS parameters:
+        ~ip (str): IPV4 address of the socket to open.
+        ~port (int): Local port of the socket to open.
+        ~buffer_size (int): The size of the buffer for the socket, in bytes.
+        ~timeout (float): The time out period for the socket, in seconds.
+    """
     rospy.init_node('nmea_socket_driver')
 
     try:

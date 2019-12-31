@@ -30,6 +30,8 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+"""Defines the main method for the nmea_serial_driver executable."""
+
 import serial
 import sys
 
@@ -39,6 +41,14 @@ from libnmea_navsat_driver.driver import RosNMEADriver
 
 
 def main():
+    """Create and run the nmea_serial_driver ROS node.
+
+    Creates a ROS NMEA Driver and feeds it NMEA sentence strings from a serial device.
+
+    ROS parameters:
+        ~port (str): Path of the serial device to open.
+        ~baud (int): Baud rate to configure the serial device.
+    """
     rospy.init_node('nmea_serial_driver')
 
     serial_port = rospy.get_param('~port', '/dev/ttyUSB0')

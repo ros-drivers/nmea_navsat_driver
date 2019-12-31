@@ -30,6 +30,9 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+"""Defines the main method for the nmea_topic_driver executable."""
+
+
 from nmea_msgs.msg import Sentence
 import rospy
 
@@ -37,6 +40,12 @@ from libnmea_navsat_driver.driver import RosNMEADriver
 
 
 def nmea_sentence_callback(nmea_sentence, driver):
+    """Process a NMEA sentence message with a RosNMEADriver.
+
+    Args:
+        nmea_sentence (nmea_msgs.msg.Sentence): NMEA sentence message to feed to the driver.
+        driver (RosNMEADriver): Driver to feed the sentence.
+    """
     try:
         driver.add_sentence(
             nmea_sentence.sentence,
@@ -51,6 +60,13 @@ def nmea_sentence_callback(nmea_sentence, driver):
 
 
 def main():
+    """Create and run the nmea_topic_driver ROS node.
+
+    Creates a NMEA Driver and feeds it NMEA sentence strings from a ROS subscriber.
+
+    ROS subscribers:
+        mea_sentence (nmea_msgs.msg.Sentence): NMEA sentence messages to feed to the driver.
+    """
     rospy.init_node('nmea_topic_driver')
 
     driver = RosNMEADriver()

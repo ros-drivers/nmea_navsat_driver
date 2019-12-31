@@ -30,6 +30,8 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+"""Defines the main method for the nmea_topic_serial_reader executable."""
+
 import serial
 
 from nmea_msgs.msg import Sentence
@@ -39,6 +41,18 @@ from libnmea_navsat_driver.driver import RosNMEADriver
 
 
 def main():
+    """Create and run the nmea_topic_serial_reader ROS node.
+
+    Opens a serial device and publishes data from the device as nmea_msgs.msg.Sentence messages.
+
+    ROS parameters:
+        ~port (str): Path of the serial device to open.
+        ~baud (int): Baud rate to configure the serial device.
+
+    ROS publishers:
+        nmea_sentence (nmea_msgs.msg.Sentence): Publishes each line from the open serial device as a new
+            message. The header's stamp is set to the rostime when the data is read from the serial device.
+    """
     rospy.init_node('nmea_topic_serial_reader')
 
     nmea_pub = rospy.Publisher("nmea_sentence", Sentence)
