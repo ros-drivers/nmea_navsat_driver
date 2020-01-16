@@ -32,6 +32,7 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+import re
 import socket
 import sys
 
@@ -73,13 +74,14 @@ if __name__ == '__main__':
         # recv-loop: When we're connected, keep receiving stuff until that fails
         while not rospy.is_shutdown():
             try:
-                data, remote_address = socket_.recvfrom(buffer_size)
+                data = socket_.recv(buffer_size)
 
                 # strip the data
-                data_list = data.strip().split("\n")
+                data_list = [ line.strip() for line in re.split(r'[\r\n]+', data) ]
+                if not data_list[-1]:
+                    del data_list[-1]
 
                 for data in data_list:
-
                     try:
                         driver.add_sentence(data, frame_id)
                     except ValueError as e:
@@ -88,7 +90,7 @@ if __name__ == '__main__':
                                     "including a bag file with the NMEA sentences that caused it." % e)
 
             except socket.error, exc:
-                rospy.logerr("Caught exception socket.error during recvfrom: %s" % exc)
+                rospy.logerr("Caught exception socket.error during recv: %s" % exc)
                 socket_.close()
                 # This will break out of the recv-loop so we start another iteration of the connection-loop
                 break
