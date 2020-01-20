@@ -45,9 +45,11 @@ def main():
 
     Creates a ROS NMEA Driver and feeds it NMEA sentence strings from a serial device.
 
-    ROS parameters:
-        ~port (str): Path of the serial device to open.
-        ~baud (int): Baud rate to configure the serial device.
+    :ROS Parameters:
+        - ~port (str)
+            Path of the serial device to open.
+        - ~baud (int)
+            Baud rate to configure the serial device.
     """
     rospy.init_node('nmea_serial_driver')
 

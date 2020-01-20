@@ -64,8 +64,9 @@ def main():
 
     Creates a NMEA Driver and feeds it NMEA sentence strings from a ROS subscriber.
 
-    ROS subscribers:
-        mea_sentence (nmea_msgs.msg.Sentence): NMEA sentence messages to feed to the driver.
+    :ROS Subscribers:
+        - nmea_sentence (nmea_msgs.msg.Sentence)
+            NMEA sentence messages to feed to the driver.
     """
     rospy.init_node('nmea_topic_driver')
 
