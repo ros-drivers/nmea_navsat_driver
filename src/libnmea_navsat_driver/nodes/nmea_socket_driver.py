@@ -34,9 +34,13 @@
 
 
 import select
-import socketserver
 import sys
 import traceback
+
+try:
+    import socketserver
+except ImportError:
+    import SocketServer as socketserver  # Python 2.7
 
 import rospy
 
@@ -52,13 +56,16 @@ class NMEAMessageHandler(socketserver.DatagramRequestHandler):
 
             try:
                 self.server.driver.add_sentence(line, self.server.frame_id)
-            except ValueError as e:
+            except ValueError:
                 rospy.logwarn(
                     "ValueError, likely due to missing fields in the NMEA "
                     "message. Please report this issue at "
                     "https://github.com/ros-drivers/nmea_navsat_driver"
-                    ", including a bag file with the NMEA sentences that "
-                    "caused it.\n\n" + traceback.format_exc())
+                    ", including the following:\n\n"
+                    "```\n" +
+                    repr(line) + "\n\n" +
+                    traceback.format_exc() +
+                    "```")
 
 
 def main():
@@ -69,7 +76,6 @@ def main():
     ROS parameters:
         ~ip (str): IPV4 address of the socket to open.
         ~port (int): Local port of the socket to open.
-        ~buffer_size (int): The size of the buffer for the socket, in bytes.
         ~timeout (float): The time out period for the socket, in seconds.
     """
     rospy.init_node('nmea_socket_driver')
@@ -77,7 +83,6 @@ def main():
     try:
         local_ip = rospy.get_param('~ip', '0.0.0.0')
         local_port = rospy.get_param('~port', 10110)
-        buffer_size = rospy.get_param('~buffer_size', 4096)  # deprecated
         timeout = rospy.get_param('~timeout_sec', 2)
     except KeyError as e:
         rospy.logerr("Parameter %s not found" % e)
@@ -99,7 +104,7 @@ def main():
             rlist, _, _ = select.select([server], [], [], timeout)
             if server in rlist:
                 server.handle_request()
-    except Exception as e:
+    except Exception:
         rospy.logerr(traceback.format_exc())
     finally:
         server.server_close()
