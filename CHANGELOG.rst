@@ -2,8 +2,8 @@
 Changelog for package nmea_navsat_driver
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.5.2 (2020-02-23)
+------------------
 * Use Python's SocketServer rather than low level socket APIs. (`#92 <https://github.com/evenator/nmea_navsat_driver/issues/92>`_)
   This simplifies code and makes it easier to add TCP support in the future. The ``buffer_size`` parameter is no longer necessary because this is an internal detail of UDPServer.
 * Add documentation that passes ``pydocstyle``. (`#88 <https://github.com/evenator/nmea_navsat_driver/issues/88>`_)
