@@ -1,6 +1,25 @@
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Change log for nmea_navsat_driver package
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Changelog for package nmea_navsat_driver
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Forthcoming
+-----------
+* Use Python's SocketServer rather than low level socket APIs. (`#92 <https://github.com/evenator/nmea_navsat_driver/issues/92>`_)
+  This simplifies code and makes it easier to add TCP support in the future. The ``buffer_size`` parameter is no longer necessary because this is an internal detail of UDPServer.
+* Add documentation that passes ``pydocstyle``. (`#88 <https://github.com/evenator/nmea_navsat_driver/issues/88>`_)
+* Add an Option to Use GNSS Time and Improve Time Parsing. (`#79 <https://github.com/evenator/nmea_navsat_driver/issues/79>`_)
+
+  - Add an optional parameter ``use_GNSS_time`` to use the time from the GPS sentences for ROS message time instead of using system time.
+  - Improve GPS time parsing to support nanosecond precision on devices that support it.
+  - Improve GPS time parsing to use RMC message for date when available.
+  - Improve GPS time parsing to resolve ambiguities in date and century using system time.
+* Refactor all nodes into entrypoint scripts. (`#76 <https://github.com/evenator/nmea_navsat_driver/issues/76>`_).
+  This will reduce the difference between ROS 1 and ROS 2 code, because ROS 2 uses Python entry points to install executables.
+* Fix PEP8 Violations (`#68 <https://github.com/evenator/nmea_navsat_driver/issues/68>`_). All Python modules and scripts now pass ``pycodestyle --max-line-length 120 src/libnmea_navsat_driver/ scripts/*``
+* Add ``nmea_serial_driver`` launch file (`#60 <https://github.com/evenator/nmea_navsat_driver/issues/60>`_)
+* Removed ``roslint`` as build depend. (`#59 <https://github.com/evenator/nmea_navsat_driver/issues/59>`_)
+  ``roslint`` was accidentally re-added as a build dependency in `#25 <https://github.com/evenator/nmea_navsat_driver/issues/25>`_.
+* Contributors: Ed Venator, Ryan Govostes, Tony Baltovski, Xiangyang Zhi, diasdm
 
 0.5.1 (2018-12-30)
 ------------------
@@ -27,7 +46,7 @@ Change log for nmea_navsat_driver package
 * Add debug logging output to the parser (PR #8, Mike Purvis)
 * Add queue size arguement to publishers to fix warning on Indigo (PR #9, Mike Purvis)
 * Add support for roslint and some related cleanup (PR #10, Mike Purvis)
- 
+
 0.4.0 (2014-05-04)
 -------------------
 * Initial release for Indigo
