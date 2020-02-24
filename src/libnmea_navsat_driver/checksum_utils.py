@@ -30,16 +30,24 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+"""Utilities for calculating and checking NMEA checksums."""
 
-# Check the NMEA sentence checksum. Return True if passes and False if failed
+
 def check_nmea_checksum(nmea_sentence):
+    """Calculate and compare the checksum of a NMEA string.
+
+    Args:
+        nmea_sentence (str): The NMEA sentence to check.
+
+    Return True if the calculated checksum of the sentence matches the one provided.
+    """
     split_sentence = nmea_sentence.split('*')
     if len(split_sentence) != 2:
-        #No checksum bytes were found... improperly formatted/incomplete NMEA data?
+        # No checksum bytes were found... improperly formatted/incomplete NMEA data?
         return False
     transmitted_checksum = split_sentence[1].strip()
 
-    #Remove the $ at the front
+    # Remove the $ at the front
     data_to_checksum = split_sentence[0][1:]
     checksum = 0
     for c in data_to_checksum:

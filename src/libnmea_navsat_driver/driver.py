@@ -30,6 +30,8 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+"""Provides a driver for NMEA GNSS devices."""
+
 import math
 
 import rospy
@@ -42,26 +44,61 @@ import libnmea_navsat_driver.parser
 
 
 class RosNMEADriver(object):
+    """ROS driver for NMEA GNSS devices."""
+
     def __init__(self):
+        """Initialize the ROS NMEA driver.
+
+        Creates the following ROS publishers:
+            NavSatFix publisher on the 'fix' channel.
+            TwistStamped publisher on the 'vel' channel.
+            QuaternionStamped publisher on the 'heading' channel.
+            TimeReference publisher on the 'time_reference' channel.
+
+        Reads the following ROS parameters:
+            ~time_ref_source (str): The name of the source in published TimeReference messages. (default None)
+            ~useRMC (bool): If true, use RMC NMEA messages. If false, use GGA and VTG messages. (default False)
+            ~epe_quality0 (float): Value to use for default EPE quality for fix type 0. (default 1000000)
+            ~epe_quality1 (float): Value to use for default EPE quality for fix type 1. (default 4.0)
+            ~epe_quality2 (float): Value to use for default EPE quality for fix type 2. (default (0.1)
+            ~epe_quality4 (float): Value to use for default EPE quality for fix type 4. (default 0.02)
+            ~epe_quality5 (float): Value to use for default EPE quality for fix type 5. (default 4.0)
+            ~epe_quality9 (float): Value to use for default EPE quality for fix type 9. (default 3.0)
+        """
         self.fix_pub = rospy.Publisher('fix', NavSatFix, queue_size=1)
         self.vel_pub = rospy.Publisher('vel', TwistStamped, queue_size=1)
-        self.time_ref_pub = rospy.Publisher('time_reference', TimeReference, queue_size=1)
+        self.use_GNSS_time = rospy.get_param('~use_GNSS_time', False)
+        if not self.use_GNSS_time:
+            self.time_ref_pub = rospy.Publisher(
+                'time_reference', TimeReference, queue_size=1)
 
         self.time_ref_source = rospy.get_param('~time_ref_source', None)
         self.use_RMC = rospy.get_param('~useRMC', False)
         self.valid_fix = False
 
-    # Returns True if we successfully did something with the passed in
-    # nmea_string
     def add_sentence(self, nmea_string, frame_id, timestamp=None):
+        """Public method to provide a new NMEA sentence to the driver.
+
+        Args:
+            nmea_string (str): NMEA sentence in string form.
+            frame_id (str): TF frame ID of the GPS receiver.
+            timestamp(rospy.Time, optional): Time the sentence was received.
+                If timestamp is not specified, the current time is used.
+
+        Returns:
+            bool: True if the NMEA string is successfully processed, False if there is an error.
+        """
         if not check_nmea_checksum(nmea_string):
             rospy.logwarn("Received a sentence with an invalid checksum. " +
                           "Sentence was: %s" % repr(nmea_string))
             return False
 
-        parsed_sentence = libnmea_navsat_driver.parser.parse_nmea_sentence(nmea_string)
+        parsed_sentence = libnmea_navsat_driver.parser.parse_nmea_sentence(
+            nmea_string)
         if not parsed_sentence:
-            rospy.logdebug("Failed to parse NMEA sentence. Sentece was: %s" % nmea_string)
+            rospy.logdebug(
+                "Failed to parse NMEA sentence. Sentence was: %s" %
+                nmea_string)
             return False
 
         if timestamp:
@@ -71,16 +108,24 @@ class RosNMEADriver(object):
         current_fix = NavSatFix()
         current_fix.header.stamp = current_time
         current_fix.header.frame_id = frame_id
-        current_time_ref = TimeReference()
-        current_time_ref.header.stamp = current_time
-        current_time_ref.header.frame_id = frame_id
-        if self.time_ref_source:
-            current_time_ref.source = self.time_ref_source
-        else:
-            current_time_ref.source = frame_id
+        if not self.use_GNSS_time:
+            current_time_ref = TimeReference()
+            current_time_ref.header.stamp = current_time
+            current_time_ref.header.frame_id = frame_id
+            if self.time_ref_source:
+                current_time_ref.source = self.time_ref_source
+            else:
+                current_time_ref.source = frame_id
 
         if not self.use_RMC and 'GGA' in parsed_sentence:
             data = parsed_sentence['GGA']
+
+            if self.use_GNSS_time:
+                if math.isnan(data['utc_time'][0]):
+                    rospy.logwarn("Time in the NMEA sentence is NOT valid")
+                    return False
+                current_fix.header.stamp = rospy.Time(data['utc_time'][0], data['utc_time'][1])
+
             gps_qual = data['fix_type']
             if gps_qual == 0:
                 current_fix.status.status = NavSatStatus.STATUS_NO_FIX
@@ -129,27 +174,33 @@ class RosNMEADriver(object):
 
             self.fix_pub.publish(current_fix)
 
-            if not math.isnan(data['utc_time']):
-                current_time_ref.time_ref = rospy.Time.from_sec(data['utc_time'])
+            if not (math.isnan(data['utc_time'][0]) or self.use_GNSS_time):
+                current_time_ref.time_ref = rospy.Time(
+                    data['utc_time'][0], data['utc_time'][1])
                 self.last_valid_fix_time = current_time_ref
                 self.time_ref_pub.publish(current_time_ref)
 
         elif not self.use_RMC and 'VTG' in parsed_sentence:
             data = parsed_sentence['VTG']
 
-            # Only report VTG data when you've received a valid GGA fix as well.
+            # Only report VTG data when you've received a valid GGA fix as
+            # well.
             if self.valid_fix:
                 current_vel = TwistStamped()
                 current_vel.header.stamp = current_time
                 current_vel.header.frame_id = frame_id
-                current_vel.twist.linear.x = data['speed'] * \
-                                             math.sin(data['true_course'])
-                current_vel.twist.linear.y = data['speed'] * \
-                                             math.cos(data['true_course'])
+                current_vel.twist.linear.x = data['speed'] * math.sin(data['true_course'])
+                current_vel.twist.linear.y = data['speed'] * math.cos(data['true_course'])
                 self.vel_pub.publish(current_vel)
 
         elif 'RMC' in parsed_sentence:
             data = parsed_sentence['RMC']
+
+            if self.use_GNSS_time:
+                if math.isnan(data['utc_time'][0]):
+                    rospy.logwarn("Time in the NMEA sentence is NOT valid")
+                    return False
+                current_fix.header.stamp = rospy.Time(data['utc_time'][0], data['utc_time'][1])
 
             # Only publish a fix from RMC if the use_RMC flag is set.
             if self.use_RMC:
@@ -176,11 +227,13 @@ class RosNMEADriver(object):
 
                 self.fix_pub.publish(current_fix)
 
-                if not math.isnan(data['utc_time']):
-                    current_time_ref.time_ref = rospy.Time.from_sec(data['utc_time'])
+                if not (math.isnan(data['utc_time'][0]) or self.use_GNSS_time):
+                    current_time_ref.time_ref = rospy.Time(
+                        data['utc_time'][0], data['utc_time'][1])
                     self.time_ref_pub.publish(current_time_ref)
 
-            # Publish velocity from RMC regardless, since GGA doesn't provide it.
+            # Publish velocity from RMC regardless, since GGA doesn't provide
+            # it.
             if data['fix_valid']:
                 current_vel = TwistStamped()
                 current_vel.header.stamp = current_time
@@ -193,13 +246,19 @@ class RosNMEADriver(object):
         else:
             return False
 
-    """Helper method for getting the frame_id with the correct TF prefix"""
-
     @staticmethod
     def get_frame_id():
+        """Get the TF frame_id.
+
+        Queries rosparam for the ~frame_id param. If a tf_prefix param is set,
+        the frame_id is prefixed with the prefix.
+
+        Returns:
+            str: The fully-qualified TF frame ID.
+        """
         frame_id = rospy.get_param('~frame_id', 'gps')
         if frame_id[0] != "/":
-            """Add the TF prefix"""
+            # Add the TF prefix
             prefix = ""
             prefix_param = rospy.search_param('tf_prefix')
             if prefix_param:

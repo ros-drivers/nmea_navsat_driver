@@ -3,7 +3,7 @@
   <name>nmea_navsat_driver</name>
   <version>0.5.1</version>
   <description>
-    Package to parse NMEA strings and publish a very simple GPS message. Does not 
+    Package to parse NMEA strings and publish a very simple GPS message. Does not
     require or use the GPSD deamon.
   </description>
 
