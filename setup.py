@@ -10,6 +10,7 @@ setup(
     version='0.5.1',
     packages=["libnmea_navsat_driver", "libnmea_navsat_driver.nodes"],
     data_files=[
+        ('share/' + PACKAGE_NAME, ['package.xml']),
         (os.path.join(SHARE_DIR, "launch"), glob(os.path.join("launch", "*.launch.py"))),
         (os.path.join(SHARE_DIR, "config"), glob(os.path.join("config", "*.yaml")))],
     package_dir={'': 'src',},
