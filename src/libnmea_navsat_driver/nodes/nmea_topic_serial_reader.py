@@ -45,13 +45,16 @@ def main():
 
     Opens a serial device and publishes data from the device as nmea_msgs.msg.Sentence messages.
 
-    ROS parameters:
-        ~port (str): Path of the serial device to open.
-        ~baud (int): Baud rate to configure the serial device.
+    :ROS Parameters:
+        - ~port (str)
+            Path of the serial device to open.
+        - ~baud (int)
+            Baud rate to configure the serial device.
 
-    ROS publishers:
-        nmea_sentence (nmea_msgs.msg.Sentence): Publishes each line from the open serial device as a new
-            message. The header's stamp is set to the rostime when the data is read from the serial device.
+    :ROS Publishers:
+        - nmea_sentence (nmea_msgs.msg.Sentence)
+            Publishes each line from the openserial device as a new message. The header's stamp is
+            set to the rostime when the data is read from the serial device.
     """
     rospy.init_node('nmea_topic_serial_reader')
 

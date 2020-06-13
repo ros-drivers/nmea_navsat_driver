@@ -73,10 +73,13 @@ def main():
 
     Creates a ROS NMEA Driver and feeds it NMEA sentence strings from a UDP socket.
 
-    ROS parameters:
-        ~ip (str): IPV4 address of the socket to open.
-        ~port (int): Local port of the socket to open.
-        ~timeout (float): The time out period for the socket, in seconds.
+    :ROS Parameters:
+        - ~ip (str)
+            IPV4 address of the socket to open.
+        - ~port (int)
+            Local port of the socket to open.
+        - ~timeout (float)
+            The time out period for the socket, in seconds.
     """
     rospy.init_node('nmea_socket_driver')
 

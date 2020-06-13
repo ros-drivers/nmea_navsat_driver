@@ -17,6 +17,7 @@
   <author>Steven Martin</author>
 
   <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>python-catkin-pkg</build_depend>
   <exec_depend>rospy</exec_depend>
   <exec_depend>python-serial</exec_depend>
   <exec_depend>geometry_msgs</exec_depend>
