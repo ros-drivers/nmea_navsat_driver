@@ -42,6 +42,9 @@ import logging
 logger = logging.getLogger('rosout')
 
 
+field_delimiter_regex = re.compile(r'[,*]')
+
+
 def safe_float(field):
     """Convert  field to a float.
 
@@ -284,7 +287,7 @@ def parse_nmea_sentence(nmea_sentence):
             "Regex didn't match, sentence not valid NMEA? Sentence was: %s" %
             repr(nmea_sentence))
         return False
-    fields = [field.strip(',') for field in nmea_sentence.split(',')]
+    fields = [field for field in field_delimiter_regex.split(nmea_sentence)]
 
     # Ignore the $ and talker ID portions (e.g. GP)
     sentence_type = fields[0][3:]
