@@ -111,9 +111,9 @@ def convert_time(nmea_utc):
     more than 12 hours ahead of the NMEA time.
 
     Args:
-        nmea_utc (str): NMEA UTC time string to convert. The expected format is HHMMSS.SS where
+        nmea_utc (str): NMEA UTC time string to convert. The expected format is HHMMSS[.SS] where
             HH is the number of hours [0,24), MM is the number of minutes [0,60),
-            and SS.SS is the number of seconds [0,60) of the time in UTC.
+            and SS[.SS] is the number of seconds [0,60) of the time in UTC.
 
     Returns:
         tuple(int, int): 2-tuple of (unix seconds, nanoseconds) if the sentence contains valid time.
@@ -128,7 +128,10 @@ def convert_time(nmea_utc):
     hours = int(nmea_utc[0:2])
     minutes = int(nmea_utc[2:4])
     seconds = int(nmea_utc[4:6])
-    nanosecs = int(nmea_utc[7:]) * pow(10, 9 - len(nmea_utc[7:]))
+    nanosecs = 0
+    # If the seconds includes a decimal portion, convert it to nanoseconds
+    if len(nmea_utc) > 7:
+        nanosecs = int(nmea_utc[7:]) * pow(10, 9 - len(nmea_utc[7:]))
 
     # Resolve the ambiguity of day
     day_offset = int((utc_time.hour - hours)/12.0)
