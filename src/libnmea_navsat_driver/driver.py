@@ -209,11 +209,8 @@ class RosNMEADriver(object):
             current_fix.status.status = gps_qual[1]
             current_fix.position_covariance_type = gps_qual[2]
 
-            if gps_qual > 0:
-                self.valid_fix = True
-            else:
-                self.valid_fix = False
-
+            self.valid_fix = (fix_type > 0)
+            
             current_fix.status.service = NavSatStatus.SERVICE_GPS
 
             latitude = data['latitude']
