@@ -74,7 +74,7 @@ def main():
             sentence = Sentence()
             sentence.header.stamp = rospy.get_rostime()
             sentence.header.frame_id = frame_id
-            sentence.sentence = data
+            sentence.sentence = data.decode('utf-8')
 
             nmea_pub.publish(sentence)
 

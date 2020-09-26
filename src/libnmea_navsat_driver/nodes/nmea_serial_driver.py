@@ -64,8 +64,9 @@ def main():
             driver = RosNMEADriver()
             while not rospy.is_shutdown():
                 data = GPS.readline().strip()
+                nmea_str = data.decode('utf-8')
                 try:
-                    driver.add_sentence(data, frame_id)
+                    driver.add_sentence(nmea_str, frame_id)
                 except ValueError as e:
                     rospy.logwarn(
                         "Value error, likely due to missing fields in the NMEA message. "
