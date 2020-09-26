@@ -2,7 +2,7 @@
 Change log for nmea_navsat_driver package
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
+0.6.0 (2020-09-26)
 ------------------
 * Update to Python3 for ROS Noetic (`#113 <https://github.com/ros-drivers/nmea_navsat_driver/issues/113>`_)
 * Fix valid_fix check (`#111 <https://github.com/ros-drivers/nmea_navsat_driver/issues/111>`_) (`#112 <https://github.com/ros-drivers/nmea_navsat_driver/issues/112>`_)
