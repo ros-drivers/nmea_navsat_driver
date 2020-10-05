@@ -74,9 +74,14 @@ def main():
             sentence = Sentence()
             sentence.header.stamp = rospy.get_rostime()
             sentence.header.frame_id = frame_id
-            sentence.sentence = data.decode('utf-8')
 
-            nmea_pub.publish(sentence)
+            try:
+                sentence.sentence = data.decode('ascii')
+            except UnicodeError as e:
+                rospy.logwarn("Skipped reading a line from the serial device because it could not be "
+                              "decoded as an ASCII string. The bytes were {0}".format(data))
+            else:
+                nmea_pub.publish(sentence)
 
     except rospy.ROSInterruptException:
         GPS.close()  # Close GPS serial port

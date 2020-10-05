@@ -64,9 +64,12 @@ def main():
             driver = RosNMEADriver()
             while not rospy.is_shutdown():
                 data = GPS.readline().strip()
-                nmea_str = data.decode('utf-8')
                 try:
+                    nmea_str = data.decode('ascii')
                     driver.add_sentence(nmea_str, frame_id)
+                except UnicodeError as e:
+                    rospy.logwarn("Skipped reading a line from the serial device because it could not be "
+                                  "decoded as an ASCII string. The bytes were {0}".format(data))
                 except ValueError as e:
                     rospy.logwarn(
                         "Value error, likely due to missing fields in the NMEA message. "
