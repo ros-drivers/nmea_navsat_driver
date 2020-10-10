@@ -17,7 +17,8 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
 
-import sys, os
+import os
+import sys
 from catkin_pkg.packages import find_packages
 
 catkin_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -34,8 +35,8 @@ catkin_package = find_packages(catkin_dir).values()[0]
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = ['sphinx.ext.autodoc',
-    'sphinx.ext.viewcode',
-    'sphinx.ext.napoleon']  # Sphinx Support for Google-style docstrings
+              'sphinx.ext.viewcode',
+              'sphinx.ext.napoleon']  # Sphinx Support for Google-style docstrings
 
 # Sphinx Napoleon Configuration
 napoleon_google_docstring = True
@@ -181,6 +182,3 @@ texinfo_documents = [
      author, 'nmea_navsat_driver', 'One line description of project.',
      'Miscellaneous'),
 ]
-
-
-
