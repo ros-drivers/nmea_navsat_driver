@@ -31,6 +31,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
+from functools import partial
+
 from nmea_msgs.msg import Sentence
 import rclpy
 
@@ -55,8 +57,8 @@ def main(args=None):
     driver.get_frame_id()
 
     driver.create_subscription(
-        Sentence, 'nmea_sentence', nmea_sentence_callback, 10)
+        Sentence, 'nmea_sentence', partial(nmea_sentence_callback, driver=driver), 10)
 
-    rclpy.spin(node)
+    rclpy.spin(driver)
 
     rclpy.shutdown()
