@@ -41,7 +41,7 @@ def check_nmea_checksum(nmea_sentence):
 
     Return True if the calculated checksum of the sentence matches the one provided.
     """
-    split_sentence = nmea_sentence.split('*')
+    split_sentence = nmea_sentence.decode().split('*')
     if len(split_sentence) != 2:
         # No checksum bytes were found... improperly formatted/incomplete NMEA data?
         return False

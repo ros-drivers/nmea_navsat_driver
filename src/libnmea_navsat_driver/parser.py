@@ -283,7 +283,7 @@ def parse_nmea_sentence(nmea_sentence):
         False if the sentence could not be parsed.
     """
     # Check for a valid nmea sentence
-    nmea_sentence = nmea_sentence.strip()  # Cut possible carriage return or new line of NMEA Sentence
+    nmea_sentence = nmea_sentence.decode().strip()  # Cut possible carriage return or new line of NMEA Sentence
     if not re.match(
             r'(^\$GP|^\$GN|^\$GL|^\$IN).*\*[0-9A-Fa-f]{2}$', nmea_sentence):
         logger.debug(
