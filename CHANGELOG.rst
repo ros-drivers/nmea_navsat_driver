@@ -2,6 +2,14 @@
 Change log for nmea_navsat_driver package
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.6.1 (2021-01-16)
+------------------
+* Decode lines from the UDP server before passing them to the driver (`#122 <https://github.com/evenator/nmea_navsat_driver/issues/122>`_)
+* Fix `#115 <https://github.com/evenator/nmea_navsat_driver/issues/115>`_ Decoding errors. (`#116 <https://github.com/evenator/nmea_navsat_driver/issues/116>`_)
+* Fix UTC time parsing `#105 <https://github.com/evenator/nmea_navsat_driver/issues/105>`_ (`#106 <https://github.com/evenator/nmea_navsat_driver/issues/106>`_)
+* Fix lint in doc config python (`#117 <https://github.com/evenator/nmea_navsat_driver/issues/117>`_)
+* Contributors: Ed Venator
+
 0.6.0 (2020-09-26)
 ------------------
 * Update to Python3 for ROS Noetic (`#113 <https://github.com/ros-drivers/nmea_navsat_driver/issues/113>`_)
