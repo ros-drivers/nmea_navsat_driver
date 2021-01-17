@@ -55,7 +55,11 @@ class NMEAMessageHandler(socketserver.DatagramRequestHandler):
                 continue
 
             try:
-                self.server.driver.add_sentence(line, self.server.frame_id)
+                nmea_str = line.decode('ascii')
+                self.server.driver.add_sentence(nmea_str, self.server.frame_id)
+            except UnicodeError as e:
+                rospy.logwarn("Skipped reading a line from the UDP socket because it could not be "
+                              "decoded as an ASCII string. The bytes were {0}".format(line))
             except ValueError:
                 rospy.logwarn(
                     "ValueError, likely due to missing fields in the NMEA "
