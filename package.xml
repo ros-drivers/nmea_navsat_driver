@@ -9,7 +9,7 @@
 
   <maintainer email="evenator@gmail.com">Ed Venator</maintainer>
 
-  <license>BSD</license>
+  <license>BSD-3-Clause</license>
 
   <url type="website">http://ros.org/wiki/nmea_navsat_driver</url>
 

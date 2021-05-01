@@ -19,6 +19,10 @@ install(DIRECTORY launch/
    FILES_MATCHING PATTERN "*.launch"
 )
 
+install(FILES LICENSE.txt
+   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
+
 if (CATKIN_ENABLE_TESTING)
   find_package(roslint)
   roslint_python()
