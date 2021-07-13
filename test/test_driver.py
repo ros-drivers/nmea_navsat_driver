@@ -47,7 +47,6 @@ import rostest
 import serial
 import virtualserialports
 import yaml
-from nmea_navsat_driver.msg import *
 from sensor_msgs.msg import *
 
 
