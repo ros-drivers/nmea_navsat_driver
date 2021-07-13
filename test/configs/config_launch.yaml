@@ -1,0 +1,7 @@
+# list of all launch files to be tested
+nmea_serial_driver.launch:
+  # interface, serial or TCP
+  interface: serial
+  # messages that are supported by this driver configuration
+  messages:
+    - NavSatFix

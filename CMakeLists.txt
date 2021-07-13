@@ -24,7 +24,12 @@ install(FILES LICENSE.txt
 )
 
 if (CATKIN_ENABLE_TESTING)
-  find_package(roslint)
+  catkin_add_nosetests(
+    test/test_driver.py
+    DEPENDENCIES ${${PROJECT_NAME}_EXPORTED_TARGETS}
+  )
+
+  find_package(roslint REQUIRED)
   roslint_python()
   roslint_add_test()
 endif()
