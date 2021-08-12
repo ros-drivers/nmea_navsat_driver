@@ -35,7 +35,7 @@ import math
 import rclpy
 
 from rclpy.node import Node
-from sensor_msgs.msg import NavSatFix, NavSatStatus, TimeReference
+from sensor_msgs.msg import NavSatFix, NavSatStatus, TimeReference, Imu
 from geometry_msgs.msg import TwistStamped, QuaternionStamped
 from transforms3d.euler import euler2quat as quaternion_from_euler
 from libnmea_navsat_driver.checksum_utils import check_nmea_checksum
@@ -49,6 +49,7 @@ class Ros2NMEADriver(Node):
         self.fix_pub = self.create_publisher(NavSatFix, 'fix', 10)
         self.vel_pub = self.create_publisher(TwistStamped, 'vel', 10)
         self.heading_pub = self.create_publisher(QuaternionStamped, 'heading', 10)
+        self.heading_imu_pub = self.create_publisher(Imu, 'heading/imu', 10)
         self.time_ref_pub = self.create_publisher(TimeReference, 'time_reference', 10)
 
         self.time_ref_source = self.declare_parameter('time_ref_source', 'gps').value
@@ -268,11 +269,19 @@ class Ros2NMEADriver(Node):
                 current_heading.quaternion.y = q[1]
                 current_heading.quaternion.z = q[2]
                 current_heading.quaternion.w = q[3]
+
+                current_heading_as_imu = Imu()
+                current_heading_as_imu.header.stamp = current_time
+                current_heading_as_imu.header.frame_id = frame_id
+                current_heading_as_imu.orientation = current_heading._quaternion
+
                 self.heading_pub.publish(current_heading)
+                self.heading_imu_pub.publish(current_heading_as_imu)
         else:
             return False
 
     """Helper method for getting the frame_id with the correct TF prefix"""
+
     def get_frame_id(self):
         frame_id = self.declare_parameter('frame_id', 'gps').value
         prefix = self.declare_parameter('tf_prefix', '').value
