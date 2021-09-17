@@ -31,12 +31,14 @@
   <exec_depend condition="$ROS_PYTHON_VERSION == 2">python-yaml</exec_depend>
   <exec_depend condition="$ROS_PYTHON_VERSION == 3">python3-yaml</exec_depend>
 
-  <test_depend condition="$ROS_PYTHON_VERSION == 3">python3-virtualserialports-pip</test_depend>
+  <test_depend condition="$ROS_PYTHON_VERSION == 3">catkin_virtualenv</test_depend>
+
   <test_depend>roslint</test_depend>
   <test_depend>rostest</test_depend>
   <!-- The export tag contains other, unspecified, tags -->
   <export>
     <!-- This is a pure Python package, so mark it architecture independent -->
     <architecture_independent/>
+    <pip_requirements>test/requirements.txt</pip_requirements>
   </export>
 </package>
