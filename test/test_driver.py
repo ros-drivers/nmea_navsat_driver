@@ -34,6 +34,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import io
+import os
 import socket
 import subprocess
 import sys
@@ -178,7 +179,10 @@ class TestDriver(unittest.TestCase):
         self.initialize()
 
         # init ros
-        p_roscore = subprocess.Popen(['roscore', '--port', '11311'])
+        ros_master_uri = 'http://127.0.0.1:11311'
+        env_variables = os.environ.copy()
+        env_variables['ROS_MASTER_URI'] = ros_master_uri
+        p_roscore = subprocess.Popen(['roscore'], env=env_variables)
         rospy.init_node('nmea_navsat_driver_tester')
 
         # init serial handler and wait until vsps are ready
