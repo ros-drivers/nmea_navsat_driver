@@ -1,0 +1,15 @@
+# list of all raw data logs that shall be tested
+nmea.log:
+  # mode, nmea or binary (u-blox)
+  mode: nmea
+  # rate for nmea mode in lines per second
+  rate: 4
+  # additional parameters to pass to the launch file
+  parameters: []
+  topics:
+    fix:
+      _message_count: 120
+      _type: NavSatFix
+      latitude:
+        max: 48.7734
+        min: 48.7733

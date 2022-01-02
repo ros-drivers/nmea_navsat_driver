@@ -1,0 +1,8 @@
+# speedup in comparison to real time playback
+speedup_rate: 20
+# chunksize in bytes to read at once for binary data
+binary_read_len: 10
+# tcp host
+tcp_host: 127.0.0.1
+# tcp port to start with, will increment from here
+tcp_port: 4242
