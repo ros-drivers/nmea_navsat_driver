@@ -36,17 +36,18 @@ import math
 
 import rospy
 
-from sensor_msgs.msg import NavSatFix, NavSatStatus, TimeReference
-from geometry_msgs.msg import TwistStamped
+from sensor_msgs.msg import NavSatFix, NavSatStatus, TimeReference, Imu
+from geometry_msgs.msg import TwistStamped, QuaternionStamped
+from tf.transformations import quaternion_from_euler
 
 from libnmea_navsat_driver.checksum_utils import check_nmea_checksum
 import libnmea_navsat_driver.parser
-
 
 class RosNMEADriver(object):
     """ROS driver for NMEA GNSS devices."""
 
     def __init__(self):
+        print("Initialize the ROS NMEA driver.")
         """Initialize the ROS NMEA driver.
 
         Creates the following ROS publishers:
@@ -67,6 +68,7 @@ class RosNMEADriver(object):
         """
         self.fix_pub = rospy.Publisher('fix', NavSatFix, queue_size=1)
         self.vel_pub = rospy.Publisher('vel', TwistStamped, queue_size=1)
+        self.heading_pub = rospy.Publisher('heading', Imu, queue_size=1)
         self.use_GNSS_time = rospy.get_param('~use_GNSS_time', False)
         if not self.use_GNSS_time:
             self.time_ref_pub = rospy.Publisher(
@@ -88,13 +90,13 @@ class RosNMEADriver(object):
         Returns:
             bool: True if the NMEA string is successfully processed, False if there is an error.
         """
+        print(str(nmea_string))
         if not check_nmea_checksum(nmea_string):
             rospy.logwarn("Received a sentence with an invalid checksum. " +
                           "Sentence was: %s" % repr(nmea_string))
             return False
 
-        parsed_sentence = libnmea_navsat_driver.parser.parse_nmea_sentence(
-            nmea_string)
+        parsed_sentence = libnmea_navsat_driver.parser.parse_nmea_sentence(nmea_string)
         if not parsed_sentence:
             rospy.logdebug(
                 "Failed to parse NMEA sentence. Sentence was: %s" %
@@ -171,7 +173,7 @@ class RosNMEADriver(object):
             # Altitude is above ellipsoid, so adjust for mean-sea-level
             altitude = data['altitude'] + data['mean_sea_level']
             current_fix.altitude = altitude
-
+        
             self.fix_pub.publish(current_fix)
 
             if not (math.isnan(data['utc_time'][0]) or self.use_GNSS_time):
@@ -243,11 +245,71 @@ class RosNMEADriver(object):
                 current_vel.twist.linear.y = data['speed'] * \
                     math.cos(data['true_course'])
                 self.vel_pub.publish(current_vel)
+
+        elif 'HDT' in parsed_sentence:
+            data = parsed_sentence['HDT']
+            if data['heading']:
+                '''
+                current_heading = QuaternionStamped()
+                current_heading.header.stamp = current_time
+                current_heading.header.frame_id = frame_id
+                q = quaternion_from_euler(0, 0, math.radians(data['heading']))
+                current_heading.quaternion.x = q[0]
+                current_heading.quaternion.y = q[1]
+                current_heading.quaternion.z = q[2]
+                current_heading.quaternion.w = q[3]
+                '''
+                curr_im = Imu()
+                curr_im.header.stamp = current_time
+                curr_im.header.frame_id = frame_id
+                q = quaternion_from_euler(0, 0, math.radians(data['heading']))
+                curr_im.orientation.x = q[0]
+                curr_im.orientation.y = q[1]
+                curr_im.orientation.z = q[2]
+                curr_im.orientation.w = q[3]
+
+                self.heading_pub.publish(curr_im)
+
+        elif 'SHR' in parsed_sentence:
+            data = parsed_sentence['SHR']
+            #print(str(data)+ "FOUND PASHR")
+            heading = data['heading']
+            if(data['truen_flag']):
+                #print('true heading: ' + str(data['truen_flag']))
+                heading -= 90.0
+
+            curr_im = Imu()
+            curr_im.header.stamp = current_time
+            curr_im.header.frame_id = frame_id
+            q = quaternion_from_euler(math.radians(data['roll']), math.radians(data['pitch']), math.radians(heading))
+            curr_im.orientation.x = q[0]
+            curr_im.orientation.y = q[1]
+            curr_im.orientation.z = q[2]
+            curr_im.orientation.w = q[3]
+            curr_im.orientation_covariance[0]=0.001
+            curr_im.orientation_covariance[4]=0.001
+            curr_im.orientation_covariance[8]=0.001
+
+            curr_im.angular_velocity_covariance[0]=999.0
+            curr_im.angular_velocity_covariance[4]=999.0
+            curr_im.angular_velocity_covariance[8]=999.0
+
+            curr_im.linear_acceleration_covariance[0]=999.0
+            curr_im.linear_acceleration_covariance[4]=999.0
+            curr_im.linear_acceleration_covariance[8]=999.0
+            
+            #if(data['ins_status_flag'] == 0):
+                #print('warning, ins not ok. Not publishing data')
+            #else:
+
+            self.heading_pub.publish(curr_im)
+
         else:
             return False
 
     @staticmethod
     def get_frame_id():
+        return 'base_link'
         """Get the TF frame_id.
 
         Queries rosparam for the ~frame_id param. If a tf_prefix param is set,

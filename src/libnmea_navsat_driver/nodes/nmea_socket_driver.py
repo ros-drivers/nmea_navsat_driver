@@ -89,6 +89,7 @@ def main():
         sys.exit(1)
 
     # Create a socket
+    print('Create socket ' + str(local_ip) + ':' + str(local_port))
     server = socketserver.UDPServer((local_ip, local_port), NMEAMessageHandler,
                                     bind_and_activate=False)
     server.frame_id = RosNMEADriver.get_frame_id()
@@ -102,6 +103,7 @@ def main():
     try:
         while not rospy.is_shutdown():
             rlist, _, _ = select.select([server], [], [], timeout)
+            print(str(rlist))
             if server in rlist:
                 server.handle_request()
     except Exception:

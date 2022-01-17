@@ -219,10 +219,16 @@ def convert_deg_to_rads(degs):
     """
     return math.radians(safe_float(degs))
 
+def convert_true_heading_flag(flag):
+    if(flag == "T"):
+        return True
+    else:
+        print("flag was not T, but: " + str(flag))
+    return False
 
 parse_maps = {
     "GGA": [
-        ("fix_type", int, 6),
+        ("fix_type", safe_int, 6),
         ("latitude", convert_latitude, 2),
         ("latitude_direction", str, 3),
         ("longitude", convert_longitude, 4),
@@ -255,6 +261,19 @@ parse_maps = {
     "HDT": [
         ("heading", safe_float, 1),
     ],
+    "SHR": [
+        ("utc_time", convert_time, 1),
+        ("heading", safe_float, 2),
+        ("truen_flag", convert_true_heading_flag,3),
+        ("roll", safe_float, 4),
+        ("pitch", safe_float, 5),
+        ("heave", safe_float, 6),
+        ("roll_acc", safe_float, 7),
+        ("pitch_acc", safe_float, 8),
+        ("heading_acc", safe_float, 9),
+        ("gps_upd_flag", safe_int, 10),
+        ("ins_status_flag", safe_int, 11),
+    ],
     "VTG": [
         ("true_course", safe_float, 1),
         ("speed", convert_knots_to_mps, 5)
@@ -279,16 +298,15 @@ def parse_nmea_sentence(nmea_sentence):
     # Check for a valid nmea sentence
 
     if not re.match(
-            r'(^\$GP|^\$GN|^\$GL|^\$IN).*\*[0-9A-Fa-f]{2}$', nmea_sentence):
+            r'(^\$PA|^\$GP|^\$GN|^\$GL|^\$IN).*\*[0-9A-Fa-f]{2}$', nmea_sentence):
         logger.debug(
             "Regex didn't match, sentence not valid NMEA? Sentence was: %s" %
             repr(nmea_sentence))
         return False
     fields = [field.strip(',') for field in nmea_sentence.split(',')]
-
     # Ignore the $ and talker ID portions (e.g. GP)
     sentence_type = fields[0][3:]
-
+    #print("sentence type: "+ str(sentence_type))
     if sentence_type not in parse_maps:
         logger.debug("Sentence type %s not in parse map, ignoring."
                      % repr(sentence_type))
@@ -298,6 +316,7 @@ def parse_nmea_sentence(nmea_sentence):
 
     parsed_sentence = {}
     for entry in parse_map:
+        #print("entry: " + str(entry))
         parsed_sentence[entry[0]] = entry[1](fields[entry[2]])
 
     if sentence_type == "RMC":
