@@ -263,9 +263,9 @@ class RosNMEADriver(object):
                 curr_im.header.stamp = current_time
                 curr_im.header.frame_id = frame_id
                 heading = data['heading']                
-                print('Heading:' + heading)
+                print('Heading:' + str(heading))
                 heading = 90 - heading
-                print('Yaw:    ' + heading)
+                print('Yaw:    ' + str(heading))
                 
                 q = quaternion_from_euler(0, 0, math.radians(heading))
                 curr_im.orientation.x = q[0]
