@@ -262,7 +262,12 @@ class RosNMEADriver(object):
                 curr_im = Imu()
                 curr_im.header.stamp = current_time
                 curr_im.header.frame_id = frame_id
-                q = quaternion_from_euler(0, 0, math.radians(data['heading']))
+                heading = data['heading']                
+                print('Heading:' + heading)
+                heading = 90 - heading
+                print('Yaw:    ' + heading)
+                
+                q = quaternion_from_euler(0, 0, math.radians(heading))
                 curr_im.orientation.x = q[0]
                 curr_im.orientation.y = q[1]
                 curr_im.orientation.z = q[2]
