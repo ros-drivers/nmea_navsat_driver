@@ -309,7 +309,6 @@ class RosNMEADriver(object):
 
     @staticmethod
     def get_frame_id():
-        return 'base_link'
         """Get the TF frame_id.
 
         Queries rosparam for the ~frame_id param. If a tf_prefix param is set,
