@@ -267,7 +267,7 @@ class RosNMEADriver(object):
                 heading = 90 - heading
                 print('Yaw:    ' + str(heading))
                 if(heading < -180):
-                    heading += 360                
+                    heading = heading + 360                
                 q = quaternion_from_euler(0, 0, math.radians(heading))
                 curr_im.orientation.x = q[0]
                 curr_im.orientation.y = q[1]
