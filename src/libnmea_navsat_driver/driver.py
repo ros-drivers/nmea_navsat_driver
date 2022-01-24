@@ -274,6 +274,18 @@ class RosNMEADriver(object):
                 curr_im.orientation.z = q[2]
                 curr_im.orientation.w = q[3]
 
+                curr_im.orientation_covariance[0]=0.001
+                curr_im.orientation_covariance[4]=0.001
+                curr_im.orientation_covariance[8]=0.001
+
+                curr_im.angular_velocity_covariance[0]=999.0
+                curr_im.angular_velocity_covariance[4]=999.0
+                curr_im.angular_velocity_covariance[8]=999.0
+
+                curr_im.linear_acceleration_covariance[0]=999.0
+                curr_im.linear_acceleration_covariance[4]=999.0
+                curr_im.linear_acceleration_covariance[8]=999.0
+
                 self.heading_pub.publish(curr_im)
 
         elif 'SHR' in parsed_sentence:
