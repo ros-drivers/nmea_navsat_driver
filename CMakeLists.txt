@@ -19,8 +19,8 @@ install(DIRECTORY launch/
    FILES_MATCHING PATTERN "*.launch"
 )
 
-if (CATKIN_ENABLE_TESTING)
-  find_package(roslint)
-  roslint_python()
-  roslint_add_test()
-endif()
+#if (CATKIN_ENABLE_TESTING)
+#  find_package(roslint)
+#  roslint_python()
+#  roslint_add_test()
+#endif()
