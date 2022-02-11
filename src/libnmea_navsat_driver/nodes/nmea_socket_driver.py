@@ -103,7 +103,7 @@ def main():
     try:
         while not rospy.is_shutdown():
             rlist, _, _ = select.select([server], [], [], timeout)
-            print(str(rlist))
+            #print(str(rlist))
             if server in rlist:
                 server.handle_request()
     except Exception:
