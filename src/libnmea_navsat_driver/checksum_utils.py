@@ -33,7 +33,7 @@
 
 # Check the NMEA sentence checksum. Return True if passes and False if failed
 def check_nmea_checksum(nmea_sentence):
-    print(nmea_sentence)
+    #print(nmea_sentence)
 
     split_sentence = nmea_sentence.split('*')
     if len(split_sentence) != 2:
