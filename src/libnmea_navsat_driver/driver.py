@@ -264,16 +264,16 @@ class Ros2NMEADriver(Node):
                 current_heading = QuaternionStamped()
                 current_heading.header.stamp = current_time
                 current_heading.header.frame_id = frame_id
-                q = quaternion_from_euler(0, 0, math.radians(data['heading']))
-                current_heading.quaternion.x = q[0]
-                current_heading.quaternion.y = q[1]
-                current_heading.quaternion.z = q[2]
-                current_heading.quaternion.w = q[3]
+                q = quaternion_from_euler(0, 0, -math.radians(data['heading']) - 1.57)
+                current_heading.quaternion.w = q[0]
+                current_heading.quaternion.x = q[1]
+                current_heading.quaternion.y = q[2]
+                current_heading.quaternion.z = q[3]
 
                 current_heading_as_imu = Imu()
                 current_heading_as_imu.header.stamp = current_time
                 current_heading_as_imu.header.frame_id = frame_id
-                current_heading_as_imu.orientation = current_heading._quaternion
+                current_heading_as_imu.orientation = current_heading.quaternion
 
                 self.heading_pub.publish(current_heading)
                 self.heading_imu_pub.publish(current_heading_as_imu)
