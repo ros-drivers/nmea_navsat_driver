@@ -118,7 +118,9 @@ class TestDriver(unittest.TestCase):
             th_vsp.daemon = True
             th_vsp.start()
 
-        return f.getvalue().split('\n')[:-1]
+        vsp_ret = f.getvalue()
+        rospy.logwarn(vsp_ret)
+        return vsp_ret.split('\n')[:-1]
 
     def playback_log(self, launchfile, log):
         """Playback a logfile."""
