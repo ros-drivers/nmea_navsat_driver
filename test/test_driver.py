@@ -122,9 +122,7 @@ class TestDriver(unittest.TestCase):
             rospy.sleep(2.)
 
         while len(ports) < 2:
-            vsp_ret = f.getvalue()
-            rospy.logwarn(vsp_ret)
-            ports = vsp_ret.split('\n')[:-1]
+            ports = f.getvalue().split('\n')[:-1]
 
             if len(ports) < 2:
                 rospy.logwarn('Virtual serial ports not ready yet, waiting...')
