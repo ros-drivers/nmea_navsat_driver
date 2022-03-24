@@ -187,10 +187,11 @@ class TestDriver(unittest.TestCase):
 
         # init serial handler and wait until vsps are ready
         ports = self.create_vsps()
-        self.serial_writer = serial.Serial(ports[0], 115200)
         while len(ports) < 2:
             rospy.logwarn('Virtual serial ports not ready yet, waiting...')
             rospy.sleep(.5)
+
+        self.serial_writer = serial.Serial(ports[0], 115200)
 
         # process all launch files
         for launchfile in self.cfg_launches:
