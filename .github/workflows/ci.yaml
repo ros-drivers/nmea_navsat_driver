@@ -3,7 +3,7 @@ on: [push, pull_request]
 jobs:
   test:
     runs-on: [ubuntu-latest]
-    timeout-minutes: 10
+    timeout-minutes: 30
     strategy:
       matrix:
         ros_distro: [noetic]
