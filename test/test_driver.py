@@ -112,13 +112,23 @@ class TestDriver(unittest.TestCase):
     @staticmethod
     def create_vsps():
         """Create virtual serial ports (vsp) for serial driver testing."""
+        ports = []
         f = io.StringIO()
         with redirect_stdout(f):
             th_vsp = threading.Thread(target=virtualserialports.run, args=(2, False, False))
             th_vsp.daemon = True
             th_vsp.start()
 
-        return f.getvalue().split('\n')[:-1]
+            rospy.sleep(2.)
+
+        while len(ports) < 2:
+            ports = f.getvalue().split('\n')[:-1]
+
+            if len(ports) < 2:
+                rospy.logwarn('Virtual serial ports not ready yet, waiting...')
+                rospy.sleep(2.)
+
+        return ports
 
     def playback_log(self, launchfile, log):
         """Playback a logfile."""
@@ -185,12 +195,9 @@ class TestDriver(unittest.TestCase):
         p_roscore = subprocess.Popen(['roscore'], env=env_variables)
         rospy.init_node('nmea_navsat_driver_tester')
 
-        # init serial handler and wait until vsps are ready
+        # init serial handler
         ports = self.create_vsps()
         self.serial_writer = serial.Serial(ports[0], 115200)
-        while len(ports) < 2:
-            rospy.logwarn('Virtual serial ports not ready yet, waiting...')
-            rospy.sleep(.5)
 
         # process all launch files
         for launchfile in self.cfg_launches:
