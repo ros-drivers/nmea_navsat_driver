@@ -156,7 +156,7 @@ def convert_time_rmc(date_str, time_str):
         tuple(float, float): 2-tuple of (NaN, NaN) if the sentence does not contain valid time.
     """
     # If one of the time fields is empty, return NaN seconds
-    if not time_str[0:2] or not time_str[2:4] or not time_str[4:6]:
+    if not date_str[0:6] or not time_str[0:2] or not time_str[2:4] or not time_str[4:6]:
         return (float('NaN'), float('NaN'))
 
     pc_year = datetime.date.today().year
