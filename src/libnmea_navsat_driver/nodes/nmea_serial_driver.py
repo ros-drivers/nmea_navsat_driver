@@ -48,6 +48,7 @@ def main(args=None):
 
     try:
         GPS = serial.Serial(port=serial_port, baudrate=serial_baud, timeout=2)
+        driver.get_logger().info("Successfully connected to {0} at {1}.".format(serial_port, serial_baud))
         try:
             while rclpy.ok():
                 data = GPS.readline().strip()
