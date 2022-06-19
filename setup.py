@@ -20,7 +20,6 @@ setup(
     zip_safe=True,
     install_requires=['setuptools',
                       'pyserial',
-                      'transforms3d',
                       'numpy',
                       'pyyaml'],
     author='Eric Perko',
