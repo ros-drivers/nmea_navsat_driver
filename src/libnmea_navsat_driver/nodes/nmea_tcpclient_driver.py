@@ -50,7 +50,7 @@ def main(args=None):
 
                 for data in data_list:
                     try:
-                        if (not data.startswith("$"))
+                        if (not data.startswith("$")):
                             driver.get_logger().info("Received data: {}".format(data))
                         #driver.add_sentence(data, frame_id)
                     except ValueError as e:
