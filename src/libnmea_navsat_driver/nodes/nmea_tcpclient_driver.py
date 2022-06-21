@@ -45,8 +45,8 @@ def main(args=None):
                 # strip the data
                 data_list = data.decode("ascii").strip().split("\n")
 
-                # remove any incomplete messages
-                data_list = [d for d in data_list if d[-1] == '*']
+                # remove any messages that are not ended with a newline
+                data_list = [d for d in data_list if d.endswith("\n")]
 
                 for data in data_list:
                     try:
