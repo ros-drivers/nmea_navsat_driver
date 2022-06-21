@@ -41,7 +41,7 @@ def main(args=None):
         partial = ""
         while rclpy.ok():
             try:
-                partial = gnss_socket.recv(buffer_size).decode("ascii")
+                partial += gnss_socket.recv(buffer_size).decode("ascii")
 
                 # strip the data
                 lines = partial.splitlines(keepends=True)
