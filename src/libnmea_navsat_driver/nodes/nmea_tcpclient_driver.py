@@ -45,7 +45,8 @@ def main(args=None):
                 # strip the data
                 data_list = data.decode("ascii").strip().split("\n")
 
-                # remove the last element, which is an incomplete message
+                # remove the first and last element of the list
+                data_list.pop(0)
                 data_list.pop()
 
                 for data in data_list:
