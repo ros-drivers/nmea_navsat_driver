@@ -38,18 +38,17 @@ def main(args=None):
             sys.exit(1)
 
         # recv-loop: When we're connected, keep receiving stuff until that fails
+        partial = ""
         while rclpy.ok():
             try:
-                data = gnss_socket.recv(buffer_size)
+                partial = gnss_socket.recv(buffer_size).decode("ascii")
 
                 # strip the data
-                data_list = data.decode("ascii").strip().split("\n")
+                lines = partial.splitlines(keepends=True)
 
-                # remove the first and last element of the list
-                data_list.pop(0)
-                data_list.pop()
+                full_lines, last_line = lines[:-1], lines[-1]
 
-                for data in data_list:
+                for data in full_lines:
                     try:
                         if (not data.startswith("$")):
                             driver.get_logger().info("Received data: {}".format(data))
@@ -58,6 +57,26 @@ def main(args=None):
                         driver.get_logger().warn(
                             "Value error, likely due to missing fields in the NMEA message. "
                             "Error was: %s. Please report this issue to me. " % e)
+                
+                if last_line.endswith("\n"):
+                    try:
+                        if (not data.startswith("$")):
+                            driver.get_logger().info("Received data: {}".format(data))
+                        #driver.add_sentence(data, frame_id)
+                    except ValueError as e:
+                        driver.get_logger().warn(
+                            "Value error, likely due to missing fields in the NMEA message. "
+                            "Error was: %s. Please report this issue to me. " % e)
+                        partial = ""
+                else:
+                    # reset our partial data to this part line
+                    partial = last_line
+
+        # and reset our partial data to nothing
+        data = ""
+    else:
+        # reset our partial data to this part line
+        data = last_line
 
 
             except socket.error as exc:
