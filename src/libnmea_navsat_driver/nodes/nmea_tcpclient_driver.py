@@ -50,7 +50,8 @@ def main(args=None):
 
                 for data in data_list:
                     try:
-                        driver.add_sentence(data, frame_id)
+                        driver.get_logger().info("Received data: {}".format(data))
+                        #driver.add_sentence(data, frame_id)
                     except ValueError as e:
                         driver.get_logger().warn(
                             "Value error, likely due to missing fields in the NMEA message. "
