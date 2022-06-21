@@ -60,14 +60,14 @@ def main(args=None):
                 
                 if last_line.endswith("\n"):
                     try:
-                        if (not data.startswith("$")):
-                            driver.get_logger().info("Received data: {}".format(data))
+                        if (not last_line.startswith("$")):
+                            driver.get_logger().info("Received data: {}".format(last_line))
                         #driver.add_sentence(data, frame_id)
                     except ValueError as e:
                         driver.get_logger().warn(
                             "Value error, likely due to missing fields in the NMEA message. "
                             "Error was: %s. Please report this issue to me. " % e)
-                        partial = ""
+                    partial = ""
                 else:
                     # reset our partial data to this part line
                     partial = last_line
