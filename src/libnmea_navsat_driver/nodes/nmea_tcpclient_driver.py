@@ -72,12 +72,6 @@ def main(args=None):
                     # reset our partial data to this part line
                     partial = last_line
 
-        # and reset our partial data to nothing
-        data = ""
-    else:
-        # reset our partial data to this part line
-        data = last_line
-
 
             except socket.error as exc:
                 driver.get_logger().error("Caught exception socket.error when receiving: %s" % exc)
