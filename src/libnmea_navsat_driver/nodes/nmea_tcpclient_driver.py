@@ -50,9 +50,7 @@ def main(args=None):
 
                 for data in full_lines:
                     try:
-                        if (not data.startswith("$")):
-                            driver.get_logger().info("Received data: {}".format(data))
-                        #driver.add_sentence(data, frame_id)
+                        driver.add_sentence(data, frame_id)
                     except ValueError as e:
                         driver.get_logger().warn(
                             "Value error, likely due to missing fields in the NMEA message. "
@@ -60,9 +58,7 @@ def main(args=None):
                 
                 if last_line.endswith("\n"):
                     try:
-                        if (not last_line.startswith("$")):
-                            driver.get_logger().info("Received data: {}".format(last_line))
-                        #driver.add_sentence(data, frame_id)
+                        driver.add_sentence(last_line, frame_id)
                     except ValueError as e:
                         driver.get_logger().warn(
                             "Value error, likely due to missing fields in the NMEA message. "
