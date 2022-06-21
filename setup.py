@@ -30,6 +30,7 @@ setup(
     entry_points={
         'console_scripts': ['nmea_serial_driver = libnmea_navsat_driver.nodes.nmea_serial_driver:main',
                             'nmea_socket_driver = libnmea_navsat_driver.nodes.nmea_socket_driver:main',
+                            'nmea_tcpclient_driver = libnmea_navsat_driver.nodes.nmea_tcpclient_driver:main',
                             'nmea_topic_driver = libnmea_navsat_driver.nodes.nmea_topic_driver:main',
                             'nmea_topic_serial_reader = libnmea_navsat_driver.nodes.nmea_topic_serial_reader:main'],
     }
