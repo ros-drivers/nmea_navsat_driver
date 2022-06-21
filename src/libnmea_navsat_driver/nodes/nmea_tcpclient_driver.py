@@ -40,16 +40,17 @@ def main(args=None):
         # recv-loop: When we're connected, keep receiving stuff until that fails
         while rclpy.ok():
             try:
-                # Receive data from the gnss sensor
-                # Receive only whole lines
-                data = gnss_socket.recv(buffer_size).decode('utf-8').split('\n')
-                # Remove the last empty line
-                data = data[:-1]
-                # Parse the data
+                data = gnss_socket.recv(buffer_size)
 
-                for line in data:
+                # strip the data
+                data_list = data.decode("ascii").strip().split("\n")
+
+                # remove any incomplete messages
+                data_list = [d for d in data_list if d[-1] == '*']
+
+                for data in data_list:
                     try:
-                        driver.add_sentence(line, frame_id)
+                        driver.add_sentence(data, frame_id)
                     except ValueError as e:
                         driver.get_logger().warn(
                             "Value error, likely due to missing fields in the NMEA message. "
