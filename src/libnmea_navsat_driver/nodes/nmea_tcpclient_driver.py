@@ -52,7 +52,10 @@ def main(args=None):
                     try:
                         data = data.replace('\r', '') # Absoluter Pfusch, aber
                         data = data.replace('\n', '') # funktioniert halt :D
-                        driver.add_sentence(data, frame_id)
+                        if driver.add_sentence(data, frame_id):
+                            driver.get_logger().info("Received sentence: %s" % data)
+                        else:
+                            driver.get_logger().warn("Error with sentence: %s" % data)
                     except ValueError as e:
                         driver.get_logger().warn(
                             "Value error, likely due to missing fields in the NMEA message. "
@@ -62,7 +65,10 @@ def main(args=None):
                     try:
                         last_line = last_line.replace('\r', '') # Absoluter Pfusch, aber
                         last_line = last_line.replace('\n', '') # funktioniert halt :D
-                        driver.add_sentence(last_line, frame_id)
+                        if driver.add_sentence(last_line, frame_id):
+                            driver.get_logger().info("Received sentence: %s" % last_line)
+                        else:
+                            driver.get_logger().warn("Error with sentence: %s" % last_line)
                     except ValueError as e:
                         driver.get_logger().warn(
                             "Value error, likely due to missing fields in the NMEA message. "
