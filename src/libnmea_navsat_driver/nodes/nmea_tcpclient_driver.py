@@ -50,6 +50,8 @@ def main(args=None):
 
                 for data in full_lines:
                     try:
+                        data = data.replace('\r', '') # Absoluter Pfusch, aber
+                        data = data.replace('\n', '') # funktioniert halt :D
                         driver.add_sentence(data, frame_id)
                     except ValueError as e:
                         driver.get_logger().warn(
@@ -58,6 +60,8 @@ def main(args=None):
                 
                 if last_line.endswith("\n"):
                     try:
+                        last_line = last_line.replace('\r', '') # Absoluter Pfusch, aber
+                        last_line = last_line.replace('\n', '') # funktioniert halt :D
                         driver.add_sentence(last_line, frame_id)
                     except ValueError as e:
                         driver.get_logger().warn(
