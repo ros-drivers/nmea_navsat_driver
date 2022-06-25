@@ -2,8 +2,8 @@
 Changelog for package nmea_navsat_driver
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.0.0 (2022-06-25)
+------------------
 
 * Replace dependency on transforms3d pip package to tf_transformations. (`#147 <https://github.com/evenator/nmea_navsat_driver/issues/147>`_)
 * Added log for successful connection. (`#149 <https://github.com/evenator/nmea_navsat_driver/issues/149>`_)

@@ -7,7 +7,7 @@ SHARE_DIR = os.path.join("share", PACKAGE_NAME)
 
 setup(
     name=PACKAGE_NAME,
-    version='0.5.1',
+    version='2.0.0',
     packages=["libnmea_navsat_driver", "libnmea_navsat_driver.nodes"],
     data_files=[
         ('share/ament_index/resource_index/packages',
