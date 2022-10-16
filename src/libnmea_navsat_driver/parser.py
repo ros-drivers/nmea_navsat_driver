@@ -136,7 +136,7 @@ def convert_time(nmea_utc):
     # Resolve the ambiguity of day
     day_offset = int((utc_time.hour - hours)/12.0)
     utc_time += datetime.timedelta(day_offset)
-    utc_time.replace(hour=hours, minute=minutes, second=seconds)
+    utc_time = utc_time.replace(hour=hours, minute=minutes, second=seconds)
 
     unix_secs = calendar.timegm(utc_time.timetuple())
     return (unix_secs, nanosecs)
