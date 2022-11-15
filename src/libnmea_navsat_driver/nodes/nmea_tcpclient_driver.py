@@ -1,12 +1,23 @@
-# Created by Lucas Neuber
-# This is for you, Köter :P
+# Copyright 2022 Open Source Robotics Foundation, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
-import socket;
-import sys;
+import socket
+import sys
 
-import rclpy;
+import rclpy
 
-from libnmea_navsat_driver.driver import Ros2NMEADriver;
+from libnmea_navsat_driver.driver import Ros2NMEADriver
 
 def main(args=None):
     rclpy.init(args=args)
@@ -44,14 +55,16 @@ def main(args=None):
                 partial += gnss_socket.recv(buffer_size).decode("ascii")
 
                 # strip the data
-                lines = partial.splitlines(keepends=True)
-
-                full_lines, last_line = lines[:-1], lines[-1]
+                lines = partial.splitlines()
+                if partial.endswith('\n'):
+                    full_lines = lines
+                    partial = ""
+                else:
+                    full_lines = lines[:-1]
+                    partial = lines[-1]
 
                 for data in full_lines:
                     try:
-                        data = data.replace('\r', '') # Absoluter Pfusch, aber
-                        data = data.replace('\n', '') # funktioniert halt :D
                         if driver.add_sentence(data, frame_id):
                             driver.get_logger().info("Received sentence: %s" % data)
                         else:
@@ -60,24 +73,6 @@ def main(args=None):
                         driver.get_logger().warn(
                             "Value error, likely due to missing fields in the NMEA message. "
                             "Error was: %s. Please report this issue to me. " % e)
-                
-                if last_line.endswith("\n"):
-                    try:
-                        last_line = last_line.replace('\r', '') # Absoluter Pfusch, aber
-                        last_line = last_line.replace('\n', '') # funktioniert halt :D
-                        if driver.add_sentence(last_line, frame_id):
-                            driver.get_logger().info("Received sentence: %s" % last_line)
-                        else:
-                            driver.get_logger().warn("Error with sentence: %s" % last_line)
-                    except ValueError as e:
-                        driver.get_logger().warn(
-                            "Value error, likely due to missing fields in the NMEA message. "
-                            "Error was: %s. Please report this issue to me. " % e)
-                    partial = ""
-                else:
-                    # reset our partial data to this part line
-                    partial = last_line
-
 
             except socket.error as exc:
                 driver.get_logger().error("Caught exception socket.error when receiving: %s" % exc)
