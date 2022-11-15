@@ -10,11 +10,11 @@ jobs:
         ubuntu_distro: [focal]
         arch: [amd64]
     steps:
-      - uses: ros-tooling/setup-ros@v0.4.1
+      - uses: ros-tooling/setup-ros@0.4.1
         with:
           required-ros-distributions: ${{ matrix.ros_distro }}
       - name: build and test
-        uses: ros-tooling/action-ros-ci@v0.2.6
+        uses: ros-tooling/action-ros-ci@0.2.6
         with:
           package-name: nmea_navsat_driver
           target-ros1-distro: ${{ matrix.ros_distro }}
