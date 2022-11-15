@@ -10,7 +10,7 @@ jobs:
         ubuntu_distro: [focal]
         arch: [amd64]
     steps:
-      - uses: ros-tooling/setup-ros@v0.2
+      - uses: ros-tooling/setup-ros@v0.4
         with:
           required-ros-distributions: ${{ matrix.ros_distro }}
       - name: build and test
