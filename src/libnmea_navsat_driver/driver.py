@@ -35,7 +35,7 @@ import math
 import rclpy
 
 from rclpy.node import Node
-from sensor_msgs.msg import NavSatFix, NavSatStatus, TimeReference
+from sensor_msgs.msg import NavSatFix, NavSatStatus, TimeReference, Imu
 from geometry_msgs.msg import TwistStamped, QuaternionStamped
 from tf_transformations import quaternion_from_euler
 from libnmea_navsat_driver.checksum_utils import check_nmea_checksum
@@ -45,10 +45,12 @@ from libnmea_navsat_driver import parser
 class Ros2NMEADriver(Node):
     def __init__(self):
         super().__init__('nmea_navsat_driver')
-
+        self.publish_IMU = self.declare_parameter('publishIMU', False).value
         self.fix_pub = self.create_publisher(NavSatFix, 'fix', 10)
         self.vel_pub = self.create_publisher(TwistStamped, 'vel', 10)
         self.heading_pub = self.create_publisher(QuaternionStamped, 'heading', 10)
+        if self.publish_IMU:
+            self.heading_imu_pub = self.create_publisher(Imu, 'heading/imu', 10)
 
         self.time_ref_source = self.declare_parameter('time_ref_source', 'gps').value
         self.use_RMC = self.declare_parameter('useRMC', False).value
@@ -276,6 +278,17 @@ class Ros2NMEADriver(Node):
                 current_heading.quaternion.z = q[2]
                 current_heading.quaternion.w = q[3]
                 self.heading_pub.publish(current_heading)
+                
+                if self.publish_IMU:
+                    # also publish as IMU-msg/interface (e.g. for robot localization pkg)
+                    q_imu = quaternion_from_euler(0, 0, -math.radians(data['heading']) + math.pi/2)
+                    current_heading_as_imu = Imu()
+                    current_heading_as_imu.header = current_heading.header
+                    current_heading_as_imu.orientation.x = q_imu[0]
+                    current_heading_as_imu.orientation.y = q_imu[1]
+                    current_heading_as_imu.orientation.z = q_imu[2]
+                    current_heading_as_imu.orientation.w = q_imu[3]
+                    self.heading_imu_pub.publish(current_heading_as_imu)
         else:
             return False
         return True
