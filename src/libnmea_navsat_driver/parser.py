@@ -34,9 +34,9 @@ import re
 import time
 import calendar
 import math
-import logging
+import rclpy
 
-logger = logging.getLogger('rosout')
+logger = rclpy.logging.get_logger('nmea_navsat_driver')
 
 
 def safe_float(field):
