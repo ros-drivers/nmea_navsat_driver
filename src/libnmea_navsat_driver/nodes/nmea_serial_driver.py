@@ -31,6 +31,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import serial
+import io
 
 import rclpy
 
@@ -50,18 +51,28 @@ def main(args=None):
         GPS = serial.Serial(port=serial_port, baudrate=serial_baud, timeout=2)
         driver.get_logger().info("Successfully connected to {0} at {1}.".format(serial_port, serial_baud))
         try:
+            data = bytearray()
             while rclpy.ok():
-                data = GPS.readline().strip()
-                try:
-                    if isinstance(data, bytes):
-                        data = data.decode("utf-8")
-                    driver.add_sentence(data, frame_id)
-                except ValueError as e:
-                    driver.get_logger().warn(
-                        "Value error, likely due to missing fields in the NMEA message. Error was: %s. "
-                        "Please report this issue at github.com/ros-drivers/nmea_navsat_driver, including a bag file "
-                        "with the NMEA sentences that caused it." % e)
-
+                data.extend(GPS.read(1024)) # read at most 1024 bytes
+                lines = data.splitlines(keepends=True)
+                data.clear()
+                def process_line(line):
+                    line = line.decode("utf-8").rstrip()
+                    try:
+                        driver.add_sentence(line, frame_id)
+                    except ValueError as e:
+                        driver.get_logger().warn(
+                            "Value error, likely due to missing fields in the NMEA message. Error was: %s. "
+                            "Please report this issue at github.com/ros-drivers/nmea_navsat_driver, including a bag file "
+                            "with the NMEA sentences that caused it." % e)
+                # process complete lines
+                for line in lines[0:-1]:
+                    process_line(line)
+                if lines[-1].endswith(b'\r\n'):
+                    process_line(lines[-1])
+                else:
+                    # continue with the last, incomplete line
+                    data = lines[-1]
         except Exception as e:
             driver.get_logger().error("Ros error: {0}".format(e))
             GPS.close()  # Close GPS serial port
