@@ -271,6 +271,7 @@ class Ros2NMEADriver(Node):
                 self.heading_pub.publish(current_heading)
         else:
             return False
+        return True
 
     """Helper method for getting the frame_id with the correct TF prefix"""
     def get_frame_id(self):
