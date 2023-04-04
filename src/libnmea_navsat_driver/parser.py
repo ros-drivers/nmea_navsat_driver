@@ -137,7 +137,7 @@ parse_maps = {
         ("heading", safe_float, 1),
     ],
     "VTG": [
-        ("true_course", safe_float, 1),
+        ("true_course", convert_deg_to_rads, 1),
         ("speed", convert_knots_to_mps, 5)
     ]
 }
