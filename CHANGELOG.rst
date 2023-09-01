@@ -2,8 +2,8 @@
 Changelog for package nmea_navsat_driver
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.0.1 (2023-08-31)
+------------------
 * Fix parsing of true_course field in VTG message (`#165 <https://github.com/evenator/nmea_navsat_driver/issues/165>`_)
   Co-authored-by: Stefan Gisler <stefan.gisler@hillbot.ch>
 * Fix missing return in driver.add_sentence to avoid returning None.
