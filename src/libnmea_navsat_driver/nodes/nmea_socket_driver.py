@@ -73,15 +73,22 @@ def main(args=None):
             sys.exit(1)
 
         # recv-loop: When we're connected, keep receiving stuff until that fails
+        partial = ""
         while rclpy.ok():
             try:
                 data, remote_address = socket_.recvfrom(buffer_size)
-
+                partial += data.decode("ascii")
+                
                 # strip the data
-                data_list = data.decode("ascii").strip().split("\n")
+                lines = partial.splitlines()
+                if partial.endswith('\n'):
+                    full_lines = lines
+                    partial = ""
+                else:
+                    full_lines = lines[:-1]
+                    partial = lines[-1]
 
-                for data in data_list:
-
+                for data in full_lines:
                     try:
                         driver.add_sentence(data, frame_id)
                     except ValueError as e:
