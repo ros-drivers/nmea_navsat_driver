@@ -131,7 +131,7 @@ class Ros2NMEADriver(Node):
 
         parsed_sentence = parser.parse_nmea_sentence(nmea_string)
         if not parsed_sentence:
-            self.get_logger().debug("Failed to parse NMEA sentence. Sentence was: %s" % nmea_string)
+            self.get_logger().warn("Failed to parse NMEA sentence. Sentence was: %s" % nmea_string)
             return False
 
         if timestamp:
@@ -291,15 +291,12 @@ class Ros2NMEADriver(Node):
             data = parsed_sentence['HDG']
             
             magnetic_heading = data['magnetic_heading']
-            variation = data['magnetic_variation']
-            variation_direction = data['variation_direction']
 
             # Calculate variation (declination) if it's missing or invalid
-            if math.isnan(variation):
-                geomag = GeoMag()
-                declination_data = geomag.GeoMag(current_fix.latitude, current_fix.longitude)
-                variation = declination_data.dec
-                variation_direction = 'E' if variation >= 0 else 'W'
+            geomag = GeoMag()
+            declination_data = geomag.calculate(current_fix.latitude, current_fix.longitude, alt=0, time=2025)
+            variation = declination_data.dec
+            variation_direction = 'E' if variation >= 0 else 'W'
 
             if not math.isnan(magnetic_heading):
                 # Publish the magnetic heading as a QuaternionStamped
@@ -334,7 +331,6 @@ class Ros2NMEADriver(Node):
                     current_imu.orientation_covariance[4] = 0.0
                     current_imu.orientation_covariance[8] = self.yaw_variance
                     self.imu_pub.publish(current_imu)
-                    
         else:
             return False
         return True
