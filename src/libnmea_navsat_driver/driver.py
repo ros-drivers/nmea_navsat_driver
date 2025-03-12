@@ -190,9 +190,15 @@ class Ros2NMEADriver(Node):
                 self.alt_std_dev = default_epe * 2
 
             hdop = data['hdop']
-            current_fix.position_covariance[0] = (hdop * self.lon_std_dev) ** 2
-            current_fix.position_covariance[4] = (hdop * self.lat_std_dev) ** 2
-            current_fix.position_covariance[8] = (2 * hdop * self.alt_std_dev) ** 2  # FIXME
+
+            if not math.isnan(hdop):
+                current_fix.position_covariance[0] = (hdop * self.lon_std_dev) ** 2
+                current_fix.position_covariance[4] = (hdop * self.lat_std_dev) ** 2
+                current_fix.position_covariance[8] = (2 * hdop * self.alt_std_dev) ** 2  # FIXME
+            else:
+                current_fix.position_covariance[0] = 0
+                current_fix.position_covariance[4] = 0
+                current_fix.position_covariance[8] = 0
 
             self.fix_pub.publish(current_fix)
 
