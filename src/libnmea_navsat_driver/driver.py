@@ -95,7 +95,7 @@ class Ros2NMEADriver(Node):
         self.pub_heading = self.create_publisher(Float32, 'chc/heading', 2)
         self.pose_pub = self.create_publisher(PoseWithCovarianceStamped, 'chc/pose', 10)
         self.ublox_navpvt_pub = self.create_publisher(NavPVT, "chc/navpvt", 10)
-        self.pub_orientation = self.create_publisher(GnssInsOrientationStamped, 'chc/autoware_orientation', 2)
+        self.pub_orientation = self.create_publisher(GnssInsOrientationStamped, '/autoware_orientation', 2)
         self.pub_antenna0 = self.create_publisher(UInt8, 'chc/main_antenna_satellite_count', 2)  # 主天线 1 卫星数
         self.pub_antenna1 = self.create_publisher(UInt8, 'chc/auxiliary_antenna_satellite_count', 2)  # # 副天线 2 卫星数
         # CHC -------------
