@@ -45,6 +45,12 @@ def safe_float(field):
     except ValueError:
         return float('NaN')
 
+def safe_float_except_star(field):
+    try:
+        return float(field.split('*')[0])
+    except ValueError:
+        return float('NaN')
+
 
 def safe_int(field):
     try:
@@ -170,14 +176,25 @@ parse_maps = {
         
         ("fix_valid", int, 21), # 系统状态 0-9
         ("age", int, 22), # 差分延时
-    ]
+    ], 
+
+    "TMSENMSG": [
+        ("timestamp", int, 2),                      # 时间戳
+        ("temp", safe_float, 3),                    # 温度（单位：°C）
+        ("angular_velocity_x", safe_float, 5),      # 角速度 X 轴   （硬件 y -> 逻辑 x）
+        ("angular_velocity_y", safe_float, 4),      # 角速度 Y 轴   （硬件 x -> 逻辑 y）
+        ("angular_velocity_z", safe_float, 6),      # 角速度 Z 轴
+        ("linear_acceleration_x", safe_float, 8),   # 线性加速度 X 轴  （硬件 y -> 逻辑 x）
+        ("linear_acceleration_y", safe_float, 7),   # 线性加速度 Y 轴  （硬件 x -> 逻辑 y）
+        ("linear_acceleration_z", safe_float_except_star, 9),   # 线性加速度 Z 轴
+    ],
 }
 
 
 def parse_nmea_sentence(nmea_sentence):
     # Check for a valid nmea sentence
 
-    if not re.match(r'(^\$GP|^\$GN|^\$GL|^\$IN).*\*[0-9A-Fa-f]{2}$', nmea_sentence):
+    if not re.match(r'(^\$GP|^\$GN|^\$GL|^\$IN|^\$PQ).*\*[0-9A-Fa-f]{2}$', nmea_sentence):
         logger.debug("Regex didn't match, sentence not valid NMEA? Sentence was: %s"
                      % repr(nmea_sentence))
         return False

@@ -35,7 +35,7 @@ import math
 import rclpy
 
 from rclpy.node import Node
-from sensor_msgs.msg import NavSatFix, NavSatStatus, TimeReference
+from sensor_msgs.msg import NavSatFix, NavSatStatus, TimeReference, Temperature
 from geometry_msgs.msg import TwistStamped, QuaternionStamped
 from tf_transformations import quaternion_from_euler
 from libnmea_navsat_driver.checksum_utils import check_nmea_checksum
@@ -88,6 +88,9 @@ def get_quaternion_from_euler(roll, pitch, yaw):
 class Ros2NMEADriver(Node):
     def __init__(self):
         super().__init__('nmea_navsat_driver')
+
+        # ACU -------------
+        self.temperature_pub = self.create_publisher(Temperature, '/acu/imu/temp', 10)
         
         # CHC -------------
         self.imu_pub = self.create_publisher(Imu, 'chc/imu', 10)
@@ -444,6 +447,46 @@ class Ros2NMEADriver(Node):
                 self.pub_antenna1.publish(antenna1_count_msg)
             except UnicodeDecodeError as err:
                 self.get_logger().warn("UnicodeDecodeError: {0}".format(err))
+
+        elif 'TMSENMSG' in parsed_sentence:
+            # TMSENMSG是来自优控ACU设备的原始报文
+            # 包含：IMU数据（角速度/加速度/姿态）和温度值
+            # 注意！ACU的原始坐标系定义为：【注意：由于硬件的安装轴向问题，需要进行xy调换、z*-1】
+
+            data = parsed_sentence['TMSENMSG']
+            imu_msg = Imu()
+            imu_msg.header.stamp = self.get_clock().now().to_msg()
+            imu_msg.header.frame_id = frame_id
+            
+            try:
+                # publish imu data
+                # this is the acu imu temp data
+                if self.temperature_pub.get_subscription_count() > 0:
+                    temperature_msg = Temperature()
+                    temperature_msg.header.stamp = self.get_clock().now().to_msg()
+                    temperature_msg.header.frame_id = frame_id
+                    temperature_msg.temperature = data["temp"]
+                    self.temperature_pub.publish(temperature_msg)
+                
+                if self.imu_pub.get_subscription_count() > 0:
+                    imu_msg.header.stamp = self.get_clock().now().to_msg()
+                    imu_msg.header.frame_id = frame_id
+
+                    # linear_acceleration
+                    imu_msg.linear_acceleration.x = data["linear_acceleration_y"] * 9.80665
+                    imu_msg.linear_acceleration.y = -data["linear_acceleration_x"]* 9.80665
+                    imu_msg.linear_acceleration.z = -data["linear_acceleration_z"]* 9.80665
+                    
+                    # angular_velocity
+                    imu_msg.angular_velocity.x = math.radians(data["angular_velocity_y"])
+                    imu_msg.angular_velocity.y =  math.radians(-data["angular_velocity_x"])
+                    imu_msg.angular_velocity.z =  math.radians(-data["angular_velocity_z"])
+
+                    self.imu_pub.publish(imu_msg)
+
+            except UnicodeDecodeError as err:
+                self.get_logger().warn("UnicodeDecodeError: {0}".format(err))
+                
         else:
             return False
         return True
