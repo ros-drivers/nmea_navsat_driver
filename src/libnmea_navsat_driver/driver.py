@@ -31,6 +31,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import math
+from datetime import datetime, timedelta
 
 import rclpy
 
@@ -84,6 +85,26 @@ def get_quaternion_from_euler(roll, pitch, yaw):
     qw = np.cos(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) + np.sin(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
 
     return [qx, qy, qz, qw]
+
+def week_second_to_utc(week, second):
+    """
+    Convert GPS week and seconds of week to UTC datetime.
+
+    Parameters:
+    week (int): GPS week number.
+    second (float): Seconds into the GPS week.
+
+    Returns:
+    datetime: Corresponding UTC datetime.
+    """
+    # GPS epoch start date
+    gps_epoch = datetime(1980, 1, 6)
+    # Calculate total seconds from GPS epoch
+    # TODO leap seconds should be obtained from a reliable source or updated every year
+    total_seconds = week * 7 * 24 * 3600 + second + 28800 - 18.0
+    # Calculate UTC datetime
+    utc_datetime = gps_epoch + timedelta(seconds=total_seconds)
+    return utc_datetime
 
 class Ros2NMEADriver(Node):
     def __init__(self):
@@ -338,13 +359,31 @@ class Ros2NMEADriver(Node):
                 # if self.pub_heading.get_subscription_count() > 0:
                 float_msg.data = data["heading"]
                 self.pub_heading.publish(float_msg)
+
+                fix_status = int(data['fix_valid'][0])
+                if(fix_status >=1): # 1:单点定位 2:差分定位 4:固定解 5:浮点解 6:惯导
+                    current_fix.status.status = NavSatStatus.STATUS_FIX
+                else:
+                    current_fix.status.status = NavSatStatus.STATUS_NO_FIX
+                current_fix.status.service = NavSatStatus.SERVICE_GPS
+                current_fix.latitude = data['latitude']
+                current_fix.longitude = data['longitude']
+                current_fix.altitude = data['altitude']
+                current_fix.position_covariance[0] = 0.02 ** 2
+                current_fix.position_covariance[4] = 0.02 ** 2
+                current_fix.position_covariance[8] = 0.02 ** 2
+                current_fix.position_covariance_type = NavSatFix.COVARIANCE_TYPE_APPROXIMATED
+                self.valid_fix = True
+                self.fix_pub.publish(current_fix)
                     
                 if self.pub_pitch.get_subscription_count() > 0:
                     float_msg.data = data["pitch"]
                     self.pub_pitch.publish(float_msg)
                 
                 if self.imu_pub.get_subscription_count() > 0:
-                    imu_msg.header.stamp = self.get_clock().now().to_msg()
+                    utc_datetime = week_second_to_utc(data['gps_week'], data['gps_second'])
+                    imu_msg.header.stamp.sec =  int(utc_datetime.timestamp())
+                    imu_msg.header.stamp.nanosec=int((utc_datetime.timestamp() % 1) * 1e9)
                     imu_msg.header.frame_id = frame_id
                     # orientation
                     heading = math.radians(90.0-data['heading'])
