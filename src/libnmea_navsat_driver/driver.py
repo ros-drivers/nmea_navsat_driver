@@ -353,6 +353,10 @@ class Ros2NMEADriver(Node):
             pose_msg = PoseWithCovarianceStamped()
             antenna0_count_msg = UInt8()
             antenna1_count_msg = UInt8()
+            utc_datetime = week_second_to_utc(data['gps_week'], data['gps_second'])
+            imu_msg.header.stamp.sec =  int(utc_datetime.timestamp())
+            imu_msg.header.stamp.nanosec=int((utc_datetime.timestamp() % 1) * 1e9)
+            imu_msg.header.frame_id = frame_id
             
             try:
                 # if self.pub_heading.get_subscription_count() > 0:
@@ -372,6 +376,7 @@ class Ros2NMEADriver(Node):
                 current_fix.position_covariance[4] = 0.02 ** 2
                 current_fix.position_covariance[8] = 0.02 ** 2
                 current_fix.position_covariance_type = NavSatFix.COVARIANCE_TYPE_APPROXIMATED
+                current_fix.header = imu_msg.header
                 self.valid_fix = True
                 self.fix_pub.publish(current_fix)
                     
@@ -380,10 +385,7 @@ class Ros2NMEADriver(Node):
                     self.pub_pitch.publish(float_msg)
                 
                 if self.imu_pub.get_subscription_count() > 0:
-                    utc_datetime = week_second_to_utc(data['gps_week'], data['gps_second'])
-                    imu_msg.header.stamp.sec =  int(utc_datetime.timestamp())
-                    imu_msg.header.stamp.nanosec=int((utc_datetime.timestamp() % 1) * 1e9)
-                    imu_msg.header.frame_id = frame_id
+                    
                     # orientation
                     heading = math.radians(90.0-data['heading'])
                     pitch = math.radians(data['pitch'])
@@ -410,8 +412,7 @@ class Ros2NMEADriver(Node):
                     self.imu_pub.publish(imu_msg)
                     
                 if self.pose_pub.get_subscription_count() > 0:
-                    pose_msg.header.stamp = self.get_clock().now().to_msg()
-                    pose_msg.header.frame_id = frame_id
+                    pose_msg.header = imu_msg.header
                     # pose msg
                     # pose.position
                     x, y, z = coor_conv.lla2ecef_simple(data['latitude'], data['longitude'], data['altitude'])
@@ -459,8 +460,7 @@ class Ros2NMEADriver(Node):
                 
                 if self.pub_orientation.get_subscription_count() > 0:
                     orientation_msg = GnssInsOrientationStamped()
-                    orientation_msg.header.stamp = self.get_clock().now().to_msg()
-                    orientation_msg.header.frame_id = frame_id
+                    orientation_msg.header = imu_msg.header
                     
                     # orientation msg of autoware
                     # orientation
