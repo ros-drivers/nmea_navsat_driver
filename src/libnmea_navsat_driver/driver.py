@@ -475,6 +475,10 @@ class Ros2NMEADriver(Node):
                     navpvt_msg.vel_e = int(data['linear_velocity_east']) * 1000 
                     navpvt_msg.vel_d = int(data['linear_velocity_z']) * 1000 
                     navpvt_msg.g_speed = int(data['linear_velocity_vehihle']) * 1000 
+                    # 发布卫星状态（十位数，高半字节）到flags字段
+                    navpvt_msg.flags = satellite_status
+                    # 发布系统状态（个位数，低半字节）到flags2字段
+                    navpvt_msg.flags2 = system_status
                     
                     self.ublox_navpvt_pub.publish(navpvt_msg)
                 

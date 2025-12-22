@@ -174,7 +174,7 @@ parse_maps = {
         ("main_antenna_1_satellite_count", int, 19),    # 主天线 1 卫星数
         ("auxiliary_antenna_2_satellite_count", int, 20),    # 副天线 2 卫星数
         
-        ("fix_valid", str, 21), # 系统状态 0-9
+        ("fix_valid", int, 21), # 系统状态 0-9
         ("age", int, 22), # 差分延时
     ], 
 
