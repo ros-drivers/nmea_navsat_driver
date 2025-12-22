@@ -113,19 +113,19 @@ class Ros2NMEADriver(Node):
         self.temperature_pub = self.create_publisher(Temperature, '/acu/imu/temp', 10)
         
         # CHC -------------
-        self.imu_pub = self.create_publisher(Imu, 'chc/imu', 10)
-        self.pub_pitch = self.create_publisher(Float32, 'chc/pitch', 2)
-        self.pub_heading = self.create_publisher(Float32, 'chc/heading', 2)
-        self.pose_pub = self.create_publisher(PoseWithCovarianceStamped, 'chc/pose', 10)
-        self.ublox_navpvt_pub = self.create_publisher(NavPVT, "chc/navpvt", 10)
+        self.imu_pub = self.create_publisher(Imu, 'imu', 10)
+        self.pub_pitch = self.create_publisher(Float32, 'pitch', 2)
+        self.pub_heading = self.create_publisher(Float32, 'heading', 2)
+        self.pose_pub = self.create_publisher(PoseWithCovarianceStamped, 'pose', 10)
+        self.ublox_navpvt_pub = self.create_publisher(NavPVT, "navpvt", 10)
         self.pub_orientation = self.create_publisher(GnssInsOrientationStamped, '/autoware_orientation', 2)
-        self.pub_antenna0 = self.create_publisher(UInt8, 'chc/main_antenna_satellite_count', 2)  # 主天线 1 卫星数
-        self.pub_antenna1 = self.create_publisher(UInt8, 'chc/auxiliary_antenna_satellite_count', 2)  # # 副天线 2 卫星数
+        self.pub_antenna0 = self.create_publisher(UInt8, 'main_antenna_satellite_count', 2)  # 主天线 1 卫星数
+        self.pub_antenna1 = self.create_publisher(UInt8, 'auxiliary_antenna_satellite_count', 2)  # # 副天线 2 卫星数
         # CHC -------------
         
         self.fix_pub = self.create_publisher(NavSatFix, 'fix', 10)
         self.vel_pub = self.create_publisher(TwistStamped, 'vel', 10)
-        self.heading_pub = self.create_publisher(QuaternionStamped, 'heading', 10)
+        self.heading_pub = self.create_publisher(QuaternionStamped, 'hdt_heading', 10)
         self.time_ref_pub = self.create_publisher(TimeReference, 'time_reference', 10)
 
         self.time_ref_source = self.declare_parameter('time_ref_source', 'gps').value
@@ -432,20 +432,40 @@ class Ros2NMEADriver(Node):
                     self.pose_pub.publish(pose_msg)
                 
                 if self.ublox_navpvt_pub.get_subscription_count() > 0:
+                    # 从 fix_valid 中提取卫星状态（十位数，高半字节）和系统状态（个位数，低半字节）
+                    # 卫星状态：0-不定位不定向；1-单点定位定向；2-伪距差分定位定向；3-组合推算；
+                    #           4-RTK稳定解定位定向；5-RTK浮点解定位定向；6-单点定位不定向；
+                    #           7-伪距差分定位不定向；8-RTK稳定解定位不定向；9-RTK浮点解定位不定向
+                    # 系统状态：0-初始化；1-卫导模式；2-组合导航模式；3-纯惯导模式
                     satellite_status = int(data['fix_valid']/10)
                     system_status =  int(data['fix_valid'])%10
                     navpvt_msg = NavPVT()
-                    if satellite_status == 3: # 纯惯导模式
+                    # 根据卫星状态设置定位类型
+                    if satellite_status == 0:
+                        navpvt_msg.fix_type = NavPVT.FIX_TYPE_NO_FIX
+                    elif satellite_status == 1:
+                        navpvt_msg.fix_type = NavPVT.FIX_TYPE_3D
+                    elif satellite_status == 2:
+                        navpvt_msg.fix_type = NavPVT.FIX_TYPE_2D
+                    elif satellite_status == 3:
                         navpvt_msg.fix_type = NavPVT.FIX_TYPE_DEAD_RECKONING_ONLY
-                    elif satellite_status == 2: # 组合导航模式
+                    elif satellite_status == 4:
                         navpvt_msg.fix_type = NavPVT.FIX_TYPE_GNSS_DEAD_RECKONING_COMBINED
-                    else :
-                        if satellite_status == 0 :
-                            navpvt_msg.fix_type = NavPVT.FIX_TYPE_NO_FIX
-                        elif satellite_status == 6 :
-                            navpvt_msg.fix_type = NavPVT.FIX_TYPE_3D
-                        else :
-                            navpvt_msg.fix_type = NavPVT.FIX_TYPE_2D
+                    elif satellite_status == 5:
+                        navpvt_msg.fix_type = NavPVT.FIX_TYPE_3D
+                    elif satellite_status == 6:
+                        navpvt_msg.fix_type = NavPVT.FIX_TYPE_3D
+                    elif satellite_status == 7:
+                        navpvt_msg.fix_type = NavPVT.FIX_TYPE_2D
+                    elif satellite_status == 8:
+                        navpvt_msg.fix_type = NavPVT.FIX_TYPE_3D
+                    elif satellite_status == 9:
+                        navpvt_msg.fix_type = NavPVT.FIX_TYPE_3D
+                    else:
+                        navpvt_msg.fix_type = NavPVT.FIX_TYPE_NO_FIX
+                    
+                    # 直接使用系统状态值（0-初始化；1-卫导模式；2-组合导航模式；3-纯惯导模式）
+                    navpvt_msg.flags2 = system_status
                         
                     navpvt_msg.heading = int(math.degrees(data['heading'])*100000)
                     navpvt_msg.lon = int(data['latitude']* 1e7)
