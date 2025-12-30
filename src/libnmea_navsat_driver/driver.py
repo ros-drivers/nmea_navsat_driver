@@ -36,13 +36,12 @@ from datetime import datetime, timedelta
 import rclpy
 
 from rclpy.node import Node
-from sensor_msgs.msg import NavSatFix, NavSatStatus, TimeReference, Temperature
+from sensor_msgs.msg import NavSatFix, NavSatStatus, TimeReference, Temperature, Imu
 from geometry_msgs.msg import TwistStamped, QuaternionStamped
 from libnmea_navsat_driver.checksum_utils import check_nmea_checksum
 from libnmea_navsat_driver import parser
 
-from sensor_msgs.msg import Imu 
-from std_msgs.msg import UInt8
+from std_msgs.msg import UInt8, Header 
 import numpy as np
 from std_msgs.msg import Float32
 from geometry_msgs.msg import PoseWithCovarianceStamped
@@ -129,9 +128,12 @@ class Ros2NMEADriver(Node):
         self.time_ref_pub = self.create_publisher(TimeReference, 'time_reference', 10)
 
         self.time_ref_source = self.declare_parameter('time_ref_source', 'gps').value
+        self.is_gps_time = self.declare_parameter('is_gps_time', False).value
         self.use_RMC = self.declare_parameter('useRMC', False).value
         self.valid_fix = False
 
+        self.get_logger().info(f"是否使用GPS时间-{self.is_gps_time}")
+        
         # epe = estimated position error
         self.default_epe_quality0 = self.declare_parameter('epe_quality0', 1000000).value
         self.default_epe_quality1 = self.declare_parameter('epe_quality1', 4.0).value
@@ -267,7 +269,7 @@ class Ros2NMEADriver(Node):
             current_fix.position_covariance[4] = (hdop * self.lat_std_dev) ** 2
             current_fix.position_covariance[8] = (2 * hdop * self.alt_std_dev) ** 2  # FIXME
 
-            self.fix_pub.publish(current_fix)
+            # self.fix_pub.publish(current_fix)
 
             if not math.isnan(data['utc_time']):
                 current_time_ref.time_ref = rclpy.time.Time(seconds=data['utc_time']).to_msg()
@@ -312,7 +314,7 @@ class Ros2NMEADriver(Node):
                 current_fix.position_covariance_type = \
                     NavSatFix.COVARIANCE_TYPE_UNKNOWN
 
-                self.fix_pub.publish(current_fix)
+                # self.fix_pub.publish(current_fix)
 
                 if not math.isnan(data['utc_time']):
                     current_time_ref.time_ref = rclpy.time.Time(seconds=data['utc_time']).to_msg()
@@ -353,17 +355,28 @@ class Ros2NMEADriver(Node):
             pose_msg = PoseWithCovarianceStamped()
             antenna0_count_msg = UInt8()
             antenna1_count_msg = UInt8()
-            utc_datetime = week_second_to_utc(data['gps_week'], data['gps_second'])
-            imu_msg.header.stamp.sec =  int(utc_datetime.timestamp())
-            imu_msg.header.stamp.nanosec=int((utc_datetime.timestamp() % 1) * 1e9)
-            imu_msg.header.frame_id = frame_id
+            time_header = Header()
+            time_header.frame_id = frame_id
+            
+            if(self.is_gps_time):
+                utc_datetime = week_second_to_utc(data['gps_week'], data['gps_second'])
+                time_header.stamp.sec =  int(utc_datetime.timestamp())
+                time_header.stamp.nanosec=int((utc_datetime.timestamp() % 1) * 1e9)
+            else:
+                time_header.stamp = self.get_clock().now().to_msg()
+            
+            imu_msg.header = time_header
             
             try:
                 # if self.pub_heading.get_subscription_count() > 0:
                 float_msg.data = data["heading"]
                 self.pub_heading.publish(float_msg)
 
-                fix_status = int(data['fix_valid'][0])
+                # 从 fix_valid 中提取卫星状态（十位数，高半字节）和系统状态（个位数，低半字节）
+                # 卫星状态：0-不定位不定向；1-单点定位定向；2-伪距差分定位定向；3-组合推算；
+                #           4-RTK稳定解定位定向；5-RTK浮点解定位定向；6-单点定位不定向；
+                #           7-伪距差分定位不定向；8-RTK稳定解定位不定向；9-RTK浮点解定位不定向
+                fix_status = int(data['fix_valid']/10)
                 if(fix_status >=1): # 1:单点定位 2:差分定位 4:固定解 5:浮点解 6:惯导
                     current_fix.status.status = NavSatStatus.STATUS_FIX
                 else:
