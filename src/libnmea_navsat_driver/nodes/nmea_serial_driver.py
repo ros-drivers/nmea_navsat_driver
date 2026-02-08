@@ -30,6 +30,8 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+import time
+
 import serial
 
 import rclpy
@@ -46,11 +48,20 @@ def main(args=None):
     serial_port = driver.declare_parameter('port', '/dev/ttyUSB0').value
     serial_baud = driver.declare_parameter('baud', 4800).value
 
-    try:
-        GPS = serial.Serial(port=serial_port, baudrate=serial_baud, timeout=2)
-        driver.get_logger().info("Successfully connected to {0} at {1}.".format(serial_port, serial_baud))
+    # Connection-loop: connect and keep receiving. If connection fails, retry
+    while rclpy.ok():
         try:
-            while rclpy.ok():
+            GPS = serial.Serial(port=serial_port, baudrate=serial_baud, timeout=2)
+            driver.get_logger().info("Successfully connected to %s at %d." % (serial_port, serial_baud))
+        except serial.SerialException as ex:
+            driver.get_logger().error(
+                "Could not open serial port: I/O error(%s): %s" % (ex.errno, ex.strerror))
+            time.sleep(5.0)
+            continue
+
+        # recv-loop: When we're connected, keep receiving data until that fails
+        while rclpy.ok():
+            try:
                 data = GPS.readline().strip()
                 try:
                     if isinstance(data, bytes):
@@ -61,9 +72,9 @@ def main(args=None):
                         "Value error, likely due to missing fields in the NMEA message. Error was: %s. "
                         "Please report this issue at github.com/ros-drivers/nmea_navsat_driver, including a bag file "
                         "with the NMEA sentences that caused it." % e)
+            except (serial.SerialException, OSError) as e:
+                driver.get_logger().error("Serial port error: %s" % e)
+                GPS.close()
+                break
 
-        except Exception as e:
-            driver.get_logger().error("Ros error: {0}".format(e))
-            GPS.close()  # Close GPS serial port
-    except serial.SerialException as ex:
-        driver.get_logger().fatal("Could not open serial port: I/O error({0}): {1}".format(ex.errno, ex.strerror))
+        GPS.close()
