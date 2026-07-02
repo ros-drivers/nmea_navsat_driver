@@ -175,7 +175,7 @@ parse_maps = {
         ("auxiliary_antenna_2_satellite_count", int, 20),    # 副天线 2 卫星数
         
         ("fix_valid", int, 21), # 系统状态 0-9
-        ("age", int, 22), # 差分延时
+        ("age", safe_float, 22), # 差分延时
     ], 
 
     "TMSENMSG": [
