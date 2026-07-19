@@ -30,6 +30,8 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+import time
+
 import serial
 
 from nmea_msgs.msg import Sentence
@@ -51,10 +53,20 @@ def main(args=None):
     # Get the frame_id
     frame_id = driver.get_frame_id()
 
-    try:
-        GPS = serial.Serial(port=serial_port, baudrate=serial_baud, timeout=2)
+    # Connection-loop: connect and keep receiving. If connection fails, retry
+    while rclpy.ok():
         try:
-            while rclpy.ok():
+            GPS = serial.Serial(port=serial_port, baudrate=serial_baud, timeout=2)
+            driver.get_logger().info("Successfully connected to %s at %d." % (serial_port, serial_baud))
+        except serial.SerialException as ex:
+            driver.get_logger().error(
+                "Could not open serial port: I/O error(%s): %s" % (ex.errno, ex.strerror))
+            time.sleep(5.0)
+            continue
+
+        # recv-loop: When we're connected, keep receiving data until that fails
+        while rclpy.ok():
+            try:
                 data = GPS.readline().strip()
 
                 sentence = Sentence()
@@ -62,9 +74,9 @@ def main(args=None):
                 sentence.header.frame_id = frame_id
                 sentence.sentence = data.decode("ascii")
                 nmea_pub.publish(sentence)
+            except (serial.SerialException, OSError) as e:
+                driver.get_logger().error("Serial port error: %s" % e)
+                GPS.close()
+                break
 
-        except Exception as e:
-            driver.get_logger().error("Ros error: {0}".format(e))
-            GPS.close()  # Close GPS serial port
-    except serial.SerialException as ex:
-        driver.get_logger().fatal("Could not open serial port: I/O error({0}): {1}".format(ex.errno, ex.strerror))
+        GPS.close()
