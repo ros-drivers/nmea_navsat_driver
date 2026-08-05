@@ -54,6 +54,9 @@ class Ros2NMEADriver(Node):
         self.fix_pub = self.create_publisher(NavSatFix, 'fix', 10)
         self.vel_pub = self.create_publisher(TwistStamped, 'vel', 10)
         self.heading_pub = self.create_publisher(QuaternionStamped, 'heading', 10)
+        # Orientation is relative to ENU (REP 103) in contrast with heading which
+        # is positive clockwise from North
+        self.orientation_pub = self.create_publisher(QuaternionStamped, 'orientation', 10)
 
         self.time_ref_source = self.declare_parameter('time_ref_source', 'gps').value
         self.use_RMC = self.declare_parameter('useRMC', False).value
@@ -281,6 +284,24 @@ class Ros2NMEADriver(Node):
                 current_heading.quaternion.z = q[2]
                 current_heading.quaternion.w = q[3]
                 self.heading_pub.publish(current_heading)
+        elif 'PASHR' in parsed_sentence:
+            data = parsed_sentence['PASHR']
+            if data['roll'] and data['pitch'] and data['heading']:
+                current_orientation = QuaternionStamped()
+                current_orientation.header.stamp = current_time
+                current_orientation.header.frame_id = frame_id
+                # Convert from NED (Tait-Bryan angles) to ENU (quaternion)
+                q = quaternion_from_euler(
+                    math.radians(90.0-data['heading']),
+                    -math.radians(data['pitch']),
+                    math.radians(data['roll']),
+                    'rzyx'
+                )
+                current_orientation.quaternion.x = q[0]
+                current_orientation.quaternion.y = q[1]
+                current_orientation.quaternion.z = q[2]
+                current_orientation.quaternion.w = q[3]
+                self.orientation_pub.publish(current_orientation)
         else:
             return False
         return True

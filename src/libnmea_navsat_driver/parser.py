@@ -199,6 +199,12 @@ parse_maps = {
     "VTG": [
         ("true_course", convert_deg_to_rads, 1),
         ("speed", convert_knots_to_mps, 5)
+    ],
+    "PASHR": [
+        ("utc_time", convert_time, 1),
+        ("heading", safe_float, 2),
+        ("roll", safe_float, 4),
+        ("pitch", safe_float, 5),
     ]
 }
 
@@ -206,7 +212,7 @@ parse_maps = {
 def parse_nmea_sentence(nmea_sentence):
     # Check for a valid nmea sentence
 
-    if not re.match(r'(^\$GP|^\$GN|^\$GL|^\$IN).*\*[0-9A-Fa-f]{2}$', nmea_sentence):
+    if not re.match(r'(^\$GP|^\$GN|^\$GL|^\$IN|^\$P).*\*[0-9A-Fa-f]{2}$', nmea_sentence):
         logger.debug("Regex didn't match, sentence not valid NMEA? Sentence was: %s"
                      % repr(nmea_sentence))
         return False
@@ -214,6 +220,9 @@ def parse_nmea_sentence(nmea_sentence):
 
     # Ignore the $ and talker ID portions (e.g. GP)
     sentence_type = fields[0][3:]
+    # Support proprietary sentences that start with P
+    if fields[0][0:2] == "$P":
+        sentence_type = fields[0][1:]
 
     if sentence_type not in parse_maps:
         logger.debug("Sentence type %s not in parse map, ignoring."
