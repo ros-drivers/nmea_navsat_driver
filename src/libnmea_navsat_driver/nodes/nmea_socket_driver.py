@@ -78,7 +78,7 @@ def main(args=None):
                 data, remote_address = socket_.recvfrom(buffer_size)
 
                 # strip the data
-                data_list = data.decode("ascii").strip().split("\n")
+                data_list = data.decode("ascii").strip().split()
 
                 for data in data_list:
 
