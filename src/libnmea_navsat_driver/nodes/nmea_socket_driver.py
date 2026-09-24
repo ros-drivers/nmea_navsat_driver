@@ -77,8 +77,8 @@ def main(args=None):
             try:
                 data, remote_address = socket_.recvfrom(buffer_size)
 
-                # strip the data
-                data_list = data.decode("ascii").strip().split("\n")
+                # Split the datagram into individual NMEA sentences
+                data_list = data.decode("ascii").splitlines()
 
                 for data in data_list:
 
