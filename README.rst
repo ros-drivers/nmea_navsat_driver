@@ -1,7 +1,10 @@
 nmea_navsat_driver
 ===============
 
-ROS driver to parse NMEA strings and publish standard ROS NavSat message types. Does not require the GPSD daemon to be running.
+ROS driver to parse NMEA strings and publish ``gps_msgs/GPSFix`` on the ``fix`` topic,
+along with standard ROS velocity and time messages. Does not require the GPSD daemon
+to be running. True heading from HDT sentences is published on ``heading`` and updates
+the ``dip`` field on ``fix``.
 
 API
 ---

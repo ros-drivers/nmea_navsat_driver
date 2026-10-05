@@ -35,7 +35,8 @@ import math
 import rclpy
 
 from rclpy.node import Node
-from sensor_msgs.msg import NavSatFix, NavSatStatus, TimeReference
+from gps_msgs.msg import GPSFix, GPSStatus
+from sensor_msgs.msg import TimeReference
 from geometry_msgs.msg import TwistStamped, QuaternionStamped
 from libnmea_navsat_driver.checksum_utils import check_nmea_checksum
 from libnmea_navsat_driver import parser
@@ -51,7 +52,7 @@ class Ros2NMEADriver(Node):
     def __init__(self):
         super().__init__('nmea_navsat_driver')
 
-        self.fix_pub = self.create_publisher(NavSatFix, 'fix', 10)
+        self.fix_pub = self.create_publisher(GPSFix, 'fix', 10)
         self.vel_pub = self.create_publisher(TwistStamped, 'vel', 10)
         self.heading_pub = self.create_publisher(QuaternionStamped, 'heading', 10)
 
@@ -59,6 +60,8 @@ class Ros2NMEADriver(Node):
         self.use_RMC = self.declare_parameter('useRMC', False).value
         self.use_GNSS_time = self.declare_parameter('use_GNSS_time', False).value
         self.valid_fix = False
+        self.latest_fix = None
+        self.latest_heading = None
 
         if not self.use_GNSS_time:
             self.time_ref_pub = self.create_publisher(TimeReference, 'time_reference', 10)
@@ -79,49 +82,49 @@ class Ros2NMEADriver(Node):
 
         """Format for this dictionary is the fix type from a GGA message as the key, with
         each entry containing a tuple consisting of a default estimated
-        position error, a NavSatStatus value, and a NavSatFix covariance value."""
+        position error, a GPSStatus value, and a GPSFix covariance value."""
         self.gps_qualities = {
             # Unknown
             -1: [
                 self.default_epe_quality0,
-                NavSatStatus.STATUS_NO_FIX,
-                NavSatFix.COVARIANCE_TYPE_UNKNOWN
+                GPSStatus.STATUS_NO_FIX,
+                GPSFix.COVARIANCE_TYPE_UNKNOWN
             ],
             # Invalid
             0: [
                 self.default_epe_quality0,
-                NavSatStatus.STATUS_NO_FIX,
-                NavSatFix.COVARIANCE_TYPE_UNKNOWN
+                GPSStatus.STATUS_NO_FIX,
+                GPSFix.COVARIANCE_TYPE_UNKNOWN
             ],
             # SPS
             1: [
                 self.default_epe_quality1,
-                NavSatStatus.STATUS_FIX,
-                NavSatFix.COVARIANCE_TYPE_APPROXIMATED
+                GPSStatus.STATUS_FIX,
+                GPSFix.COVARIANCE_TYPE_APPROXIMATED
             ],
             # DGPS
             2: [
                 self.default_epe_quality2,
-                NavSatStatus.STATUS_SBAS_FIX,
-                NavSatFix.COVARIANCE_TYPE_APPROXIMATED
+                GPSStatus.STATUS_DGPS_FIX,
+                GPSFix.COVARIANCE_TYPE_APPROXIMATED
             ],
             # RTK Fix
             4: [
                 self.default_epe_quality4,
-                NavSatStatus.STATUS_GBAS_FIX,
-                NavSatFix.COVARIANCE_TYPE_APPROXIMATED
+                GPSStatus.STATUS_RTK_FIX,
+                GPSFix.COVARIANCE_TYPE_APPROXIMATED
             ],
             # RTK Float
             5: [
                 self.default_epe_quality5,
-                NavSatStatus.STATUS_GBAS_FIX,
-                NavSatFix.COVARIANCE_TYPE_APPROXIMATED
+                GPSStatus.STATUS_RTK_FLOAT,
+                GPSFix.COVARIANCE_TYPE_APPROXIMATED
             ],
             # WAAS
             9: [
                 self.default_epe_quality9,
-                NavSatStatus.STATUS_GBAS_FIX,
-                NavSatFix.COVARIANCE_TYPE_APPROXIMATED
+                GPSStatus.STATUS_WAAS_FIX,
+                GPSFix.COVARIANCE_TYPE_APPROXIMATED
             ]
         }
 
@@ -143,9 +146,11 @@ class Ros2NMEADriver(Node):
         else:
             current_time = self.get_clock().now().to_msg()
 
-        current_fix = NavSatFix()
+        current_fix = GPSFix()
         current_fix.header.stamp = current_time
         current_fix.header.frame_id = frame_id
+        current_fix.status.header.stamp = current_time
+        current_fix.status.header.frame_id = frame_id
         if not self.use_GNSS_time:
             current_time_ref = TimeReference()
             current_time_ref.header.stamp = current_time
@@ -156,11 +161,12 @@ class Ros2NMEADriver(Node):
                 current_time_ref.source = frame_id
 
         if not self.use_RMC and 'GGA' in parsed_sentence:
-            current_fix.position_covariance_type = NavSatFix.COVARIANCE_TYPE_APPROXIMATED
+            current_fix.position_covariance_type = GPSFix.COVARIANCE_TYPE_APPROXIMATED
 
             data = parsed_sentence['GGA']
             if self.use_GNSS_time:
                 current_fix.header.stamp = rclpy.time.Time(seconds=data['utc_time'][0], nanoseconds=data['utc_time'][1]).to_msg()
+                current_fix.status.header.stamp = current_fix.header.stamp
 
             fix_type = data['fix_type']
             if not (fix_type in self.gps_qualities):
@@ -169,12 +175,12 @@ class Ros2NMEADriver(Node):
             default_epe = gps_qual[0]
             current_fix.status.status = gps_qual[1]
             current_fix.position_covariance_type = gps_qual[2]
-            if current_fix.status.status > 0:
+            if current_fix.status.status >= GPSStatus.STATUS_FIX:
                 self.valid_fix = True
             else:
                 self.valid_fix = False
 
-            current_fix.status.service = NavSatStatus.SERVICE_GPS
+            current_fix.status.position_source = GPSStatus.SOURCE_GPS
             latitude = data['latitude']
             if data['latitude_direction'] == 'S':
                 latitude = -latitude
@@ -198,10 +204,13 @@ class Ros2NMEADriver(Node):
                 self.alt_std_dev = default_epe * 2
 
             hdop = data['hdop']
+            current_fix.hdop = hdop
             current_fix.position_covariance[0] = (hdop * self.lon_std_dev) ** 2
             current_fix.position_covariance[4] = (hdop * self.lat_std_dev) ** 2
             current_fix.position_covariance[8] = (2 * hdop * self.alt_std_dev) ** 2  # FIXME
 
+            self._update_fix_heading(current_fix)
+            self.latest_fix = current_fix
             self.fix_pub.publish(current_fix)
 
             if not (math.isnan(data['utc_time'][0]) or self.use_GNSS_time):
@@ -227,11 +236,11 @@ class Ros2NMEADriver(Node):
             # Only publish a fix from RMC if the use_RMC flag is set.
             if self.use_RMC:
                 if data['fix_valid']:
-                    current_fix.status.status = NavSatStatus.STATUS_FIX
+                    current_fix.status.status = GPSStatus.STATUS_FIX
                 else:
-                    current_fix.status.status = NavSatStatus.STATUS_NO_FIX
+                    current_fix.status.status = GPSStatus.STATUS_NO_FIX
 
-                current_fix.status.service = NavSatStatus.SERVICE_GPS
+                current_fix.status.position_source = GPSStatus.SOURCE_GPS
 
                 latitude = data['latitude']
                 if data['latitude_direction'] == 'S':
@@ -245,8 +254,10 @@ class Ros2NMEADriver(Node):
 
                 current_fix.altitude = float('NaN')
                 current_fix.position_covariance_type = \
-                    NavSatFix.COVARIANCE_TYPE_UNKNOWN
+                    GPSFix.COVARIANCE_TYPE_UNKNOWN
 
+                self._update_fix_heading(current_fix)
+                self.latest_fix = current_fix
                 self.fix_pub.publish(current_fix)
 
                 if not (math.isnan(data['utc_time'][0]) or self.use_GNSS_time):
@@ -271,7 +282,8 @@ class Ros2NMEADriver(Node):
             self.alt_std_dev = data['alt_std_dev']
         elif 'HDT' in parsed_sentence:
             data = parsed_sentence['HDT']
-            if data['heading']:
+            if math.isfinite(data['heading']):
+                self.latest_heading = data['heading']
                 current_heading = QuaternionStamped()
                 current_heading.header.stamp = current_time
                 current_heading.header.frame_id = frame_id
@@ -281,9 +293,19 @@ class Ros2NMEADriver(Node):
                 current_heading.quaternion.z = q[2]
                 current_heading.quaternion.w = q[3]
                 self.heading_pub.publish(current_heading)
+                if self.latest_fix is not None:
+                    self.latest_fix.header.stamp = current_time
+                    self.latest_fix.status.header.stamp = current_time
+                    self._update_fix_heading(self.latest_fix)
+                    self.fix_pub.publish(self.latest_fix)
         else:
             return False
         return True
+
+    def _update_fix_heading(self, fix):
+        if self.latest_heading is not None:
+            fix.track = self.latest_heading
+            fix.status.orientation_source = GPSStatus.SOURCE_GPS
 
     """Helper method for getting the frame_id with the correct TF prefix"""
     def get_frame_id(self):
