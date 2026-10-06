@@ -293,11 +293,6 @@ class Ros2NMEADriver(Node):
                 current_heading.quaternion.z = q[2]
                 current_heading.quaternion.w = q[3]
                 self.heading_pub.publish(current_heading)
-                if self.latest_fix is not None:
-                    self.latest_fix.header.stamp = current_time
-                    self.latest_fix.status.header.stamp = current_time
-                    self._update_fix_heading(self.latest_fix)
-                    self.fix_pub.publish(self.latest_fix)
         else:
             return False
         return True
