@@ -57,6 +57,8 @@ def main(args=None):
         " Using parameters ip {} port {} buffer_size {} timeout_sec {}"
         .format(local_ip, local_port, buffer_size, timeout))
 
+    prefix_warned = False
+
     # Connection-loop: connect and keep receiving. If receiving fails, reconnect
     while rclpy.ok():
         try:
@@ -78,12 +80,26 @@ def main(args=None):
                 data, remote_address = socket_.recvfrom(buffer_size)
 
                 # Split the datagram into individual NMEA sentences
-                data_list = data.decode("ascii").splitlines()
-
-                for data in data_list:
+                for line in data.splitlines():
+                    # Some senders put text in front of the '$', e.g. a Teltonika router with
+                    # its NMEA prefix option unset sends "(null)$GPGGA,...".
+                    start = line.find(b'$')
+                    if start > 0:
+                        if not prefix_warned:
+                            driver.get_logger().warn(
+                                "Ignoring %r in front of the '$' of NMEA sentences. "
+                                "Further prefixes are not logged." % line[:start])
+                            prefix_warned = True
+                        line = line[start:]
 
                     try:
-                        driver.add_sentence(data, frame_id)
+                        sentence = line.decode("ascii")
+                    except UnicodeDecodeError:
+                        driver.get_logger().warn("Dropped an NMEA sentence that is not ASCII: %r" % line)
+                        continue
+
+                    try:
+                        driver.add_sentence(sentence, frame_id)
                     except ValueError as e:
                         driver.get_logger().warn(
                             "Value error, likely due to missing fields in the NMEA message. "
